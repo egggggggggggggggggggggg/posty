@@ -1,4 +1,5 @@
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use posty_tui::tabs::TabHolder;
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
@@ -13,13 +14,48 @@ use std::{collections::HashMap, io};
 fn main() -> io::Result<()> {
     ratatui::run(|terminal| App::default().run(terminal))
 }
+
+//Unique widget types where there can only be one widget at a time. 
+pub enum WidgetType {
+    Folder(Folder),
+    Input(InputField),
+    TabHolder(TabHolder), 
+}
+impl Widget for WidgetType {
+    fn render(self, area: Rect, buf: &mut Buffer)
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Input(i) => i.render(area, buf),
+            Self::Folder(f) => f.render(area, buf),
+            Self::TabHolder(t) => t.render(area, buf),
+        }
+    }
+}
+
+
 ///Half of what I wrote is most likely a part of the crate already. This is just for fleshing out
 ///the ideas so I can more easily visualize how to structure the application.
 #[derive(Debug, Default)]
 pub struct App {
     counter: u8,
     exit: bool,
+    ///Stores the id of the widget where the user is currently
+    focused_widget: WidgetId,
+    ///Stores the widget type of the widget the user is currently
+    focused_widget_type: WidgetType,
+    single_widget_map: HashMap<>
+
 }
+///Uses the VonNeumann neighborhood definition. 
+///If a components neighbors are two, for example where 
+pub struct NeighborGraph {
+    graph: 
+}
+
+
+
 impl App {
     /// runs the application's main loop until the user quits
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
@@ -46,8 +82,13 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
-            KeyCode::Left => self.decrement_counter(),
-            KeyCode::Right => self.increment_counter(),
+            KeyCode::Left => {
+                //check if the user is currently in the tab field.
+            }
+            KeyCode::Right => {}
+            KeyCode::Char('t') => {
+                self.current_widget = 
+            }
             _ => {}
         }
     }
@@ -103,21 +144,6 @@ trait WidgetInfo {
     ///How important the widget is to be full sized. If priority of this instance is higher than
     ///another LayoutHandler will prioritize rendering this at full size than the other.  
     fn priority(&mut self) -> usize;
-}
-pub enum WidgetType {
-    Folder(Folder),
-    Input(InputField),
-}
-impl Widget for WidgetType {
-    fn render(self, area: Rect, buf: &mut Buffer)
-    where
-        Self: Sized,
-    {
-        match self {
-            Self::Input(i) => i.render(area, buf),
-            Self::Folder(f) => f.render(area, buf),
-        }
-    }
 }
 ///Placeholder
 impl WidgetInfo for WidgetType {
@@ -194,4 +220,7 @@ impl LayoutHandler {
             .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(frame.area());
     }
+}
+pub trait Resizable {
+    fn resize(&mut self);
 }
