@@ -70,3 +70,11 @@ impl RequestHandler {
         }
     }
 }
+///Holds a given set of requests for a given project
+struct Folders {
+    name: String,
+    requests: Vec<String>,
+}
+impl Folders {
+    pub fn new() {}
+}

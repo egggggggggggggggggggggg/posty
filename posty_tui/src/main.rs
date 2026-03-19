@@ -1,20 +1,20 @@
-use std::io;
-
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
-    layout::Rect,
+    layout::{Constraint, Layout, Rect},
     style::Stylize,
     symbols::border,
     text::{Line, Text},
     widgets::{Block, Paragraph, Widget},
 };
+use std::{collections::HashMap, io};
 
 fn main() -> io::Result<()> {
     ratatui::run(|terminal| App::default().run(terminal))
 }
-
+///Half of what I wrote is most likely a part of the crate already. This is just for fleshing out
+///the ideas so I can more easily visualize how to structure the application.
 #[derive(Debug, Default)]
 pub struct App {
     counter: u8,
@@ -83,10 +83,115 @@ impl Widget for &App {
             "Value: ".into(),
             self.counter.to_string().yellow(),
         ])]);
-
         Paragraph::new(counter_text)
             .centered()
             .block(block)
             .render(area, buf);
+    }
+}
+struct WidgetBox {
+    w: usize,
+    h: usize,
+    row: usize,
+    height: usize,
+}
+///This acts as a way to guarantee that all WidgetTypes have some way of fetching info on said
+///widget.
+trait WidgetInfo {
+    ///Dimension of the widget.
+    fn dims(&mut self) -> (usize, usize);
+    ///How important the widget is to be full sized. If priority of this instance is higher than
+    ///another LayoutHandler will prioritize rendering this at full size than the other.  
+    fn priority(&mut self) -> usize;
+}
+pub enum WidgetType {
+    Folder(Folder),
+    Input(InputField),
+}
+impl Widget for WidgetType {
+    fn render(self, area: Rect, buf: &mut Buffer)
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Input(i) => i.render(area, buf),
+            Self::Folder(f) => f.render(area, buf),
+        }
+    }
+}
+///Placeholder
+impl WidgetInfo for WidgetType {
+    fn dims(&mut self) -> (usize, usize) {
+        (0, 0)
+    }
+    fn priority(&mut self) -> usize {
+        1
+    }
+}
+///Folder holding contents that can be expanded to be viewed.
+struct Folder {
+    ///Placeholder for now, we want to be able to specify what the folder will hold.
+    contents: Vec<String>,
+}
+impl Widget for Folder {
+    fn render(self, area: Rect, buf: &mut Buffer)
+    where
+        Self: Sized,
+    {
+    }
+}
+///Holds text that is put into the input field.
+struct InputField {
+    input: Vec<char>,
+}
+impl Widget for InputField {
+    fn render(self, area: Rect, buf: &mut Buffer)
+    where
+        Self: Sized,
+    {
+    }
+}
+impl InputField {
+    ///Char_size is a parameter that specifies the input size of the input field.
+    ///This is done so we can pre allocate.
+    fn new(char_size: usize) -> Self {
+        Self {
+            input: Vec::with_capacity(char_size),
+        }
+    }
+    fn with_capacity() {}
+}
+///We might wanna use this instead of hashing on an enum which has issues with retrieving the data
+///associated with it. Gives a unique ID to look up for the item specified in the layout handler to
+///perform stuff.
+struct WidgetCreator {}
+
+type WidgetId = usize;
+
+///Allocates space for a given widget and is responsible for handling expanding/shrinking of the
+///layout.
+struct LayoutHandler {
+    widget_map: HashMap<WidgetId, WidgetType>,
+    ///Stores info about where the widgets are located in the terminal.
+    allocations: HashMap<WidgetId, WidgetBox>,
+}
+impl LayoutHandler {
+    fn new() -> Self {
+        Self {
+            widget_map: HashMap::new(),
+            allocations: HashMap::new(),
+        }
+    }
+    fn add_widget_to_layout(&mut self, widget_id: WidgetId, widget: WidgetType) {}
+    ///Since ratatui already handles a lot of the layout stuff all we need to do is handle widget
+    ///porportion ranking.
+    fn allocate_space(&mut self) {}
+    ///For a widget returns a vec of the WidgetIds of the adjacent widgets.
+    fn adjacent_widgets(&mut self, widget_id: WidgetId) {}
+    fn layout_test(&mut self, frame: &mut Frame) {
+        let layout = Layout::default()
+            .direction(ratatui::layout::Direction::Horizontal)
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(frame.area());
     }
 }
