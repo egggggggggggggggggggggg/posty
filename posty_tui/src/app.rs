@@ -1,0 +1,110 @@
+use std::{fmt::Octal, io};
+
+use crate::{folder::Explorer, tabs::TabArea};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use posty::save::Node;
+use ratatui::{
+    DefaultTerminal, Frame,
+    layout::{self, Constraint, Direction, Layout, Spacing},
+    widgets::{Block, Widget},
+};
+
+pub enum WidgetType {
+    Tab,
+    Explorer,
+}
+
+pub struct App {
+    exit: bool,
+    focused_widget: WidgetType,
+    explorer: Explorer,
+    tab: TabArea,
+}
+impl App {
+    pub fn new(dir_location: String) -> Self {
+        let tab_area = TabArea::default();
+        let explorer = Explorer::default();
+        Self {
+            exit: false,
+            focused_widget: WidgetType::Explorer,
+            explorer,
+            tab: tab_area,
+        }
+    }
+    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+        while !self.exit {
+            terminal.draw(|frame| self.draw(frame))?;
+            self.handle_events()?;
+        }
+        Ok(())
+    }
+    pub fn draw(&self, frame: &mut Frame) {
+        frame.render_widget(self, frame.area());
+    }
+    pub fn exit(&mut self) {
+        self.exit = true;
+    }
+}
+impl App {
+    fn handle_events(&mut self) -> io::Result<()> {
+        match event::read()? {
+            Event::Key(key_event) => {
+                if key_event.kind == KeyEventKind::Press {
+                    self.handle_key_events(key_event);
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+    fn handle_key_events(&mut self, key_event: KeyEvent) {
+        let modifier_flags = key_event.modifiers;
+        match key_event.code {
+            KeyCode::Char('q') => self.exit(),
+            KeyCode::Char('e') => self.focused_widget = WidgetType::Explorer,
+            KeyCode::Char('t') => self.focused_widget = WidgetType::Tab,
+            KeyCode::Up => {
+                if let WidgetType::Explorer = self.focused_widget {
+                    self.explorer.cursor_up();
+                }
+            }
+            KeyCode::Down => {
+                if let WidgetType::Explorer = self.focused_widget {
+                    self.explorer.cursor_down();
+                }
+            }
+            KeyCode::Enter => {
+                if let WidgetType::Explorer = self.focused_widget {
+                    self.explorer.toggle_at_cursor();
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+impl Widget for &App {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let constraints = vec![Constraint::Percentage(10), Constraint::Percentage(90)];
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(constraints)
+            .spacing(Spacing::Overlap(1))
+            .split(area);
+        self.tab.render(layout[1], buf);
+        self.explorer.to_list().render(layout[0], buf);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Action {
+    Quit,
+    MoveUp,
+    MoveDown,
+    MoveLeft,
+    MoveRight,
+    Select,
+}

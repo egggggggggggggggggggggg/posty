@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "posty",
+    "posty", "posty_config",
     "posty_gui",
     "posty_tui",   
 ]

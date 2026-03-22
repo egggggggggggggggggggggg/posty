@@ -1,80 +1,83 @@
-use std::collections::HashMap;
-
 use ratatui::{
-    layout::{Layout, Rect},
-    widgets::Widget,
+    layout::{Constraint, Direction, Layout, Spacing},
+    symbols::{border, merge::MergeStrategy},
+    text::Text,
+    widgets::{Block, Paragraph, StatefulWidget, Widget},
 };
-
-use crate::Resizable;
-pub struct TabView {
-    name: Vec<String>,
+#[derive(Default)]
+pub struct TabArea {
+    open_tab: Tab,
+    tab_bar: TabBar,
 }
-impl TabView {
-    fn new(&mut self) {
-        
+pub fn test() {}
+impl TabArea {
+    pub fn open_tab(&mut self, title: &str) {
+        self.tab_bar.titles.push(title.to_string());
+        if self.tab_bar.titles.len() == 1 {
+            self.tab_bar.selected_tab = Some(0);
+        }
     }
-    fn add_tab(&mut self) {
-        
-    }
+    pub fn test() {}
 }
-pub struct WidgetHandler {
-    //removes the widget and then resizes to fit according to it. 
-    
-}
-///Go with an ECS approach where we can seperate the components from its other info by using
-///component ids. 
-
-
-
-
-
-
-
+#[derive(Default)]
 pub struct Tab {
+    //Placeholder for now,
+    content: Vec<String>,
+}
+#[derive(Default)]
+pub struct TabBar {
+    selected_tab: Option<usize>,
+    titles: Vec<String>,
+}
+impl TabBar {}
 
-}
-pub struct TabHolder {
-    //Holds all the tabs and determines whether to display the tab and how to partition/allocate
-    //space to a given tab.
-    tabs: Vec<Tab>,
-    visible: Vec<Tab>,
-    layout: Layout,
-    dirty: bool,
-    widget_positions: HashMap<String, Rect>,
-}
-impl TabHolder {
-    fn new() {}
-    fn add_tab() {}
-    ///Adds an additonal tab to the visible tab section.
-    fn split() {}
-    fn close_tab(&mut self, tab_id: usize) {
-        //Returns back the closed tab.
-        //This gets stored in some sort of file.
-        
-    }
-    fn increase_tab_size(&mut self, tab_id: usize) {}
-}
-
-impl Widget for TabHolder {
+impl Widget for &TabArea {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
-        let prev_layout = self.layout;
-        
-
-
-
-        for tab in &self.visible {
-            //Decide the default splitting strategy.
-        }
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Percentage(5), Constraint::Fill(1)])
+            .spacing(Spacing::Overlap(1))
+            .split(area);
+        self.tab_bar.render(layout[0], buf);
+        self.open_tab.render(layout[1], buf);
+    }
+}
+impl Widget for &Tab {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        Block::bordered()
+            .title("Tab area")
+            .border_set(border::PLAIN)
+            .merge_borders(MergeStrategy::Exact)
+            .render(area, buf);
     }
 }
 
-
-
-
-
-
-///All the widget traits must implement Default as well considering we have to have defaults for
-///how the widgets appear. 
+impl Widget for &TabBar {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let amount = self.titles.len();
+        let constraints = vec![Constraint::Fill(1); amount];
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(constraints)
+            .spacing(Spacing::Overlap(1))
+            .split(area);
+        let block = Block::bordered()
+            .border_set(border::PLAIN)
+            .merge_borders(MergeStrategy::Exact);
+        for i in 0..amount {
+            let text = Text::from(self.titles[i].clone());
+            Paragraph::new(text)
+                .block(block.clone())
+                .render(layout[i], buf);
+        }
+    }
+}
