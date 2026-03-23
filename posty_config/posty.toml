@@ -1,5 +1,9 @@
-
 [tui]
 
-[gui]
+[tui.keymaps]
+"SwitchTab" = "t"
+"Hide" = "h"
+"Escape" = "esc" 
 
+
+[gui]

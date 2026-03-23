@@ -1,6 +1,6 @@
-use std::{fmt::Octal, io};
+use std::{collections::HashSet, fmt::Octal, io};
 
-use crate::{folder::Explorer, tabs::TabArea};
+use crate::{tabs::TabArea, widgets::folder::Explorer};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use posty::save::Node;
 use ratatui::{
@@ -11,7 +11,12 @@ use ratatui::{
 
 pub enum WidgetType {
     Tab,
+    ///Always present but can be hidden.
     Explorer,
+    ///Will take focus away from the current application
+    Popup,
+    ///Just a small bar that contains some message.
+    Notification,
 }
 
 pub struct App {
@@ -19,6 +24,8 @@ pub struct App {
     focused_widget: WidgetType,
     explorer: Explorer,
     tab: TabArea,
+    ///Certain widget types cannot be hidden.
+    hidden_tabs: HashSet<WidgetType>,
 }
 impl App {
     pub fn new(dir_location: String) -> Self {
@@ -29,6 +36,7 @@ impl App {
             focused_widget: WidgetType::Explorer,
             explorer,
             tab: tab_area,
+            hidden_tabs: HashSet::new(),
         }
     }
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
@@ -57,6 +65,10 @@ impl App {
         }
         Ok(())
     }
+    ///Later rewrite note: Get the value for the key in the HashMap, if none do
+    ///nothing. The value provided is an action enum. We can use this instead of just raw key
+    ///matching. Since KeyCode supports serde deserialize/serialize this isn't too bad of an issue. Only issue is possible user error
+    ///Maybe we could create our own config editor instead to prevent mishaps.
     fn handle_key_events(&mut self, key_event: KeyEvent) {
         let modifier_flags = key_event.modifiers;
         match key_event.code {

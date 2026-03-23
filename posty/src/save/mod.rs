@@ -1,12 +1,9 @@
 use reqwest::{Client, Method, RequestBuilder};
-use serde::de::value;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::convert::TryInto;
 use std::fs;
-use std::ops::Deref;
-use std::path::{Path, PathBuf};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error; // optional, nice for custom errors
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]

@@ -1,4 +1,4 @@
 pub mod app;
-pub mod folder;
+pub mod key_actions;
 pub mod tabs;
 pub mod widgets;
