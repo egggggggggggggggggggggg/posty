@@ -221,4 +221,3 @@ impl<T: StatefulWidget> StatefulWidget for Popup<T> {
     ) {
     }
 }
-

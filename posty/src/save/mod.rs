@@ -1,4 +1,4 @@
-use reqwest::{Client, Method, RequestBuilder};
+use reqwest::{Client, Method, RequestBuilder, Response};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -175,4 +175,7 @@ impl Project {
         let project: Self = serde_json::from_str(&contents)?;
         Ok(project)
     }
+}
+struct ApiResponse {
+    response: Response,
 }

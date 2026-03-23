@@ -1,6 +1,10 @@
 use std::{collections::HashSet, fmt::Octal, io};
 
-use crate::{tabs::TabArea, widgets::folder::Explorer};
+use crate::{
+    key_actions::KeyActions,
+    tabs::TabArea,
+    widgets::{commands::CommandBox, folder::Explorer},
+};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use posty::save::Node;
 use ratatui::{
@@ -18,7 +22,6 @@ pub enum WidgetType {
     ///Just a small bar that contains some message.
     Notification,
 }
-
 pub struct App {
     exit: bool,
     focused_widget: WidgetType,
@@ -26,6 +29,8 @@ pub struct App {
     tab: TabArea,
     ///Certain widget types cannot be hidden.
     hidden_tabs: HashSet<WidgetType>,
+    popup_visible: bool,
+    popup: CommandBox,
 }
 impl App {
     pub fn new(dir_location: String) -> Self {
@@ -37,6 +42,8 @@ impl App {
             explorer,
             tab: tab_area,
             hidden_tabs: HashSet::new(),
+            popup_visible: false,
+            popup: CommandBox::default(),
         }
     }
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
@@ -90,6 +97,22 @@ impl App {
                     self.explorer.toggle_at_cursor();
                 }
             }
+
+            _ => {}
+        }
+        //Example of how we can integrate key actions for better key binding flexibility.
+        let key_action = match key_event.code {
+            KeyCode::Esc => KeyActions::Escape,
+            KeyCode::Char('i') => KeyActions::Focus(crate::widgets::WidgetType::Input),
+            _ => KeyActions::Escape,
+        };
+        //we then dispatch based off of whether a widget has focus.
+        //This shouldnt be out here but be part of the match statement.
+        //Essentially just a big state machine.
+        //https://vt100.net/emu/dec_ansi_parser : example of a state machine style diagram we can
+        //use.
+        match self.focused_widget {
+            WidgetType::Tab => {}
             _ => {}
         }
     }
@@ -109,14 +132,4 @@ impl Widget for &App {
         self.tab.render(layout[1], buf);
         self.explorer.to_list().render(layout[0], buf);
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Action {
-    Quit,
-    MoveUp,
-    MoveDown,
-    MoveLeft,
-    MoveRight,
-    Select,
 }
