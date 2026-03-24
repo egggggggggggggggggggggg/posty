@@ -3,7 +3,10 @@ use ratatui::{
     widgets::{Block, Borders, StatefulWidget},
 };
 
-use crate::key_actions::{Direction, KeyActions};
+use crate::{
+    key_actions::{Direction, KeyActions},
+    widgets::Actionable,
+};
 #[derive(Default)]
 pub struct InputBoxState {
     left: Vec<char>,
@@ -63,26 +66,6 @@ impl InputBoxState {
     pub fn cursor(&self) -> usize {
         self.left.len()
     }
-    pub fn key_actions(&mut self, key_actions: KeyActions) {
-        match key_actions {
-            KeyActions::Char(ch) => {
-                self.insert_char(ch);
-            }
-            KeyActions::MoveDirection(dir) => match dir {
-                Direction::Right => {
-                    self.move_right();
-                }
-                Direction::Left => {
-                    self.move_left();
-                }
-                //Could tell the user that direction isn't allowed or just not do anything.
-                _ => {}
-            },
-            _ => {
-                panic!("Unrecognized command.")
-            }
-        }
-    }
 }
 #[derive(Default)]
 pub struct InputBox;
@@ -104,5 +87,28 @@ impl StatefulWidget for InputBox {
                 .expect("Cell could not be acquired for some reason")
                 .set_style(Style::default().bg(Color::White).fg(Color::Black));
         }
+    }
+}
+impl Actionable for InputBoxState {
+    fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
+        match key_actions {
+            KeyActions::Char(ch) => {
+                self.insert_char(ch);
+            }
+            KeyActions::MoveDirection(dir) => match dir {
+                Direction::Right => {
+                    self.move_right();
+                }
+                Direction::Left => {
+                    self.move_left();
+                }
+                //Could tell the user that direction isn't allowed or just not do anything.
+                _ => {}
+            },
+            _ => {
+                panic!("Unrecognized command.")
+            }
+        }
+        None
     }
 }

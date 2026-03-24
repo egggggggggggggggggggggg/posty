@@ -1,37 +1,18 @@
-use ratatui::widgets::StatefulWidget;
-
 use crate::{
-    key_actions::{Direction, KeyActions},
-    widgets::input_box::{InputBox, InputBoxState},
+    key_actions::KeyActions,
+    widgets::{
+        Actionable,
+        input_box::{InputBox, InputBoxState},
+    },
 };
+use ratatui::widgets::StatefulWidget;
 
 #[derive(Default)]
 pub struct CommandState {
     input_box: InputBoxState,
 }
-
-enum Commands {
-    New,
-    Open,
-    Delete,
-}
-enum Args {
-    FilePath(String),
-    Name(String),
-}
-
 impl CommandState {
     fn new() {}
-    fn key_actions(&mut self, key_actions: KeyActions) {
-        match key_actions {
-            KeyActions::Enter => {
-                self.execute();
-            }
-            _ => {
-                self.input_box.key_actions(key_actions);
-            }
-        }
-    }
     fn execute(&mut self) -> Option<KeyActions> {
         let content = self.input_box.content();
         let (cmd, args) = parse_args_and_cmd(&content);
@@ -68,5 +49,28 @@ impl StatefulWidget for CommandBox {
         buf: &mut ratatui::prelude::Buffer,
         state: &mut Self::State,
     ) {
+        self.input_box.render(area, buf, &mut state.input_box);
     }
+}
+impl Actionable for CommandState {
+    fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
+        match key_actions {
+            KeyActions::Enter => {
+                self.execute();
+            }
+            _ => {
+                self.input_box.key_actions(key_actions);
+            }
+        }
+        None
+    }
+}
+enum Commands {
+    New,
+    Open,
+    Delete,
+}
+enum Args {
+    FilePath(String),
+    Name(String),
 }

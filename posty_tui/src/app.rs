@@ -10,7 +10,7 @@ use posty::save::Node;
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{self, Constraint, Direction, Layout, Spacing},
-    widgets::{Block, Widget},
+    widgets::{Block, Paragraph, Widget},
 };
 
 pub enum WidgetType {

@@ -5,6 +5,8 @@ use ratatui::{
     text::{Span, Text},
     widgets::{Block, Borders, Paragraph, StatefulWidget, Widget},
 };
+
+use crate::widgets::dropdown::{Dropdown, DropdownState};
 #[derive(Default)]
 pub struct TabArea {
     open_tab: Tab,
@@ -25,83 +27,11 @@ pub struct Tab {
     //Placeholder for now,
     content: Vec<String>,
     dropdown: Dropdown<String>,
+    dropdown_state: DropdownState<String>,
 }
 
 ///Important api request related stuff like headers + method.
 struct TabTable {}
-#[derive(Default)]
-struct Dropdown<T: Widget> {
-    selected_item: usize,
-    expanded: bool,
-    items: Vec<T>,
-    height: usize,
-    ///These coordinates are needed as we aren't doing boxes and are arbritrarily placing the
-    ///components and manually allocating space to it ourselves.
-    x: usize,
-    y: usize,
-}
-///Height is equivalent to the items in the list + 1.
-impl<T: Widget> Dropdown<T> {
-    fn new(items: Vec<T>, initial_item: usize, x: usize, y: usize) -> Self {
-        Self {
-            selected_item: initial_item,
-            expanded: false,
-            height: items.len() + 1,
-            items,
-            x,
-            y,
-        }
-    }
-    fn select(&mut self, index: usize) {
-        self.selected_item = index;
-    }
-    fn toggle(&mut self) {
-        self.expanded = !self.expanded;
-    }
-    fn selected_item_value(&mut self) -> &mut T {
-        &mut self.items[self.selected_item]
-    }
-}
-
-impl<T: Widget> Widget for Dropdown<T> {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
-    where
-        Self: Sized,
-    {
-        let arrow = if self.expanded { "▼" } else { "▶" };
-
-        // When collapsed onl allocate one row; when expanded allocate one per item + header.
-        let row_count = if self.expanded { self.height } else { 1 };
-        let constraints = vec![Constraint::Length(1); row_count];
-        let layout = Layout::new(Direction::Vertical, constraints).split(area);
-
-        // --- Header row (always visible) ---
-        // Shows the selected index and a toggle arrow. Replace `self.selected_item`
-        // with a real label if you add a `labels: Vec<String>` field later.
-        let header = Paragraph::new(Span::styled(
-            format!(" {} Item {} ", arrow, self.selected_item),
-            Style::default().add_modifier(Modifier::BOLD),
-        ))
-        .block(Block::default().borders(Borders::ALL));
-        header.render(layout[0], buf);
-        if self.expanded {
-            for (i, item) in self.items.into_iter().enumerate() {
-                let row_area = layout[i + 1]; // offset by 1 to skip the header row
-
-                // Highlight the currently selected item by painting the background first.
-                if i == self.selected_item {
-                    Block::default()
-                        .style(Style::default().bg(ratatui::style::Color::DarkGray))
-                        .render(row_area, buf);
-                }
-
-                // Render the item widget itself into the same area.
-                // Any widget works here: Paragraph, Gauge, custom widgets, etc.
-                item.render(row_area, buf);
-            }
-        }
-    }
-}
 #[derive(Default)]
 pub struct TabBar {
     selected_tab: Option<usize>,

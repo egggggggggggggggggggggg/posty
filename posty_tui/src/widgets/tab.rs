@@ -1,7 +1,7 @@
 use posty::save::ApiRequest;
 use ratatui::{
     layout::Rect,
-    widgets::{StatefulWidget, Table, TableState},
+    widgets::{Paragraph, StatefulWidget, Table, TableState},
 };
 
 use crate::{
@@ -92,7 +92,6 @@ pub struct TabState {
     ///defined widget while App focus is for all of the present widgets.
     focused_widget: WidgetType,
     input_box: InputBoxState,
-    method_dropdown: Dropdown,
     param_table: TableState,
     cursor_pos: (usize, usize),
     ///This is allocated on creation of tab that alllows for dynamic widgets that change,
@@ -106,8 +105,18 @@ impl TabState {
     pub fn extract(&mut self) -> &ApiRequest {
         &self.api_request
     }
-    ///Sends back an action that the poller must act on.
-    pub fn key_action(&mut self, action: KeyActions) -> Option<KeyActions> {
+    ///This does not handle losing focus. That is handled in the key_action function.
+    pub fn change_focus(&mut self, new_wiget: WidgetType) {}
+    ///The focus of a widget changedd by the postion of the cursor placement.
+    pub fn cursor_focus(&mut self, x: usize, y: usize) {}
+}
+pub struct Tab;
+impl StatefulWidget for Tab {
+    type State = TabState;
+    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {}
+}
+impl Actionable for TabState {
+    fn key_actions(&mut self, action: KeyActions) -> Option<KeyActions> {
         match action {
             KeyActions::Escape => return Some(KeyActions::LoseFocus),
             KeyActions::Focus(widget) => self.change_focus(widget),
@@ -120,13 +129,4 @@ impl TabState {
         }
         None
     }
-    ///This does not handle losing focus. That is handled in the key_action function.
-    pub fn change_focus(&mut self, new_wiget: WidgetType) {}
-    ///The focus of a widget changedd by the postion of the cursor placement.
-    pub fn cursor_focus(&mut self, x: usize, y: usize) {}
-}
-pub struct Tab;
-impl StatefulWidget for Tab {
-    type State = TabState;
-    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {}
 }

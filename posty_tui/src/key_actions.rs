@@ -2,19 +2,20 @@ use crossterm::event::KeyCode;
 
 use crate::widgets::WidgetType;
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub enum CursorMode {
     #[default]
     Insert,
     Normal,
 }
+#[derive(Clone, Copy)]
 pub enum Direction {
     Up,
     Down,
     Right,
     Left,
 }
-
+#[derive(Clone, Copy)]
 pub enum KeyActions {
     ///Escape can be used for anything as the widget has to first handle everything that happens
     ///when it loses focus. LoseFocus must always be emitted after Escape is sent. This exists just
@@ -48,4 +49,6 @@ pub enum KeyActions {
     Enter,
     ///The raw chars are sent for the widget to intrepet.
     Char(char),
+    ///Quit out of the application entirely
+    Quit,
 }

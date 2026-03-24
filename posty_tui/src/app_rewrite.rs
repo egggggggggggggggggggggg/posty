@@ -1,9 +1,26 @@
-use std::{collections::HashMap, hash::Hash, io};
-
+use crate::{
+    key_actions::KeyActions,
+    widgets::{
+        Actionable, WidgetType,
+        dropdown::{Dropdown, DropdownState},
+    },
+};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use ratatui::{DefaultTerminal, Frame, layout::Rect, widgets::Widget};
-
-use crate::{key_actions::KeyActions, widgets::WidgetType};
+use ratatui::{
+    DefaultTerminal, Frame,
+    layout::Rect,
+    widgets::{StatefulWidget, Widget},
+};
+use std::{collections::HashMap, hash::Hash, io};
+pub struct AppState {
+    pub running: bool,
+    pub focused_widget: WidgetType,
+    pub dropdown_state: DropdownState<String>,
+}
+pub struct AppWidget;
+impl AppState {
+    fn new() {}
+}
 
 pub struct App {
     //Determine what components will always be visible/required
@@ -19,6 +36,8 @@ pub struct App {
     ///could probably be improved. Quad-Tree is also a possibility. Binary-search but 2D. This
     ///requires the whole allocations be known upfront however which is less flexible.
     widget_area: HashMap<WidgetType, Rect>,
+    ///Testing stuff. Ignore
+    dropdown_state: DropdownState<String>,
 }
 
 pub type KeyMap = HashMap<KeyCode, KeyActions>;
@@ -26,11 +45,14 @@ pub type KeyMap = HashMap<KeyCode, KeyActions>;
 impl App {
     ///Make an allocation table that doesn't act on raw values but rather layout/rects.
     pub fn new(key_map: KeyMap) -> Self {
+        let dropdown_state =
+            DropdownState::with_items(vec!["A".to_string(), "B".to_string(), "C".to_string()]);
         Self {
             exit: false,
             key_map,
             focused_widget: WidgetType::Empty,
             widget_area: HashMap::new(),
+            dropdown_state,
         }
     }
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
@@ -40,8 +62,8 @@ impl App {
         }
         Ok(())
     }
-    pub fn draw(&self, frame: &mut Frame) {
-        frame.render_widget(self, frame.area());
+    pub fn draw(&mut self, frame: &mut Frame) {
+        frame.render_stateful_widget(Dropdown::default(), frame.area(), &mut self.dropdown_state);
     }
     pub fn resize() {}
 }
@@ -63,19 +85,21 @@ impl App {
         let code = key_event.code;
         if let Some(action) = self.key_map.get(&code) {
             match action {
+                KeyActions::Quit => {
+                    self.exit = true;
+                }
                 KeyActions::LoseFocus => {
                     self.focused_widget = WidgetType::Empty;
                 }
-                _ => {}
+                KeyActions::Focus(a) => self.focused_widget = a.clone(),
+                _ => match self.focused_widget {
+                    WidgetType::InputBox => {
+                        self.dropdown_state.key_actions(*action);
+                    }
+                    _ => {}
+                },
             }
         }
-    }
-}
-impl Widget for &App {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
-    where
-        Self: Sized,
-    {
     }
 }
 //fn hit_test(widget: &Widget, px: i32, py: i32) -> Option<&Widget> {

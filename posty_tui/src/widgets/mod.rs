@@ -7,7 +7,7 @@ pub mod input_box;
 pub mod response_section;
 pub mod tab;
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub enum WidgetType {
     #[default]
     Empty,
@@ -15,6 +15,7 @@ pub enum WidgetType {
     Folder,
     Tabs,
     InputBox,
+    Dropdown,
 }
 ///Trait for Widgets that can cycle between a selection of items via arrow keys. ex: a dropdown
 ///menu.
