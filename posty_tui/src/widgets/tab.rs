@@ -1,18 +1,19 @@
+use std::collections::HashMap;
+
 use posty::save::ApiRequest;
 use ratatui::{
-    layout::Rect,
-    widgets::{Paragraph, StatefulWidget, Table, TableState},
+    layout::{self, Constraint, Layout, Rect, Spacing},
+    widgets::{Block, Paragraph, StatefulWidget, Table, TableState},
 };
 
 use crate::{
     key_actions::KeyActions,
     widgets::{
         Actionable, WidgetType,
-        dropdown::Dropdown,
+        dropdown::{Dropdown, DropdownState},
         input_box::{InputBox, InputBoxState},
     },
 };
-
 #[derive(Default)]
 enum Method {
     #[default]
@@ -22,29 +23,6 @@ enum Method {
     Patch,
     Put,
     Delete,
-}
-impl Method {
-    fn next(self) -> Self {
-        match self {
-            Method::Get => Method::Post,
-            Method::Post => Method::Set,
-            Method::Set => Method::Patch,
-            Method::Patch => Method::Put,
-            Method::Put => Method::Delete,
-            Method::Delete => Method::Get,
-        }
-    }
-
-    fn prev(self) -> Self {
-        match self {
-            Method::Get => Method::Delete,
-            Method::Post => Method::Get,
-            Method::Set => Method::Post,
-            Method::Patch => Method::Set,
-            Method::Put => Method::Patch,
-            Method::Delete => Method::Put,
-        }
-    }
 }
 #[derive(Default)]
 enum Category {
@@ -81,28 +59,20 @@ pub enum TabSection {
 
 ///Fat struct that should probably be split. The majority of the fields revolve around how we can
 ///transfer the user across widgets to edit/modify the widget state.
-#[derive(Default)]
+///Do not call the default method as it'll just be a blank tab.
 pub struct TabState {
     selected_method: Method,
     selected_category: Category,
-    ///Should the widgets be cached, aka don't reconstruct and reuse old saved widgets.
     focused_section: TabSection,
     pub api_request: ApiRequest,
-    ///There are levels to focus. Widget focus and overall app focus. widget focus is local hte
-    ///defined widget while App focus is for all of the present widgets.
     focused_widget: WidgetType,
-    input_box: InputBoxState,
-    param_table: TableState,
-    cursor_pos: (usize, usize),
-    ///This is allocated on creation of tab that alllows for dynamic widgets that change,
-    arbitrary_area: Rect,
-    response_section: ResponseSection,
+    pub input_box: InputBoxState,
+    pub param_table: TableState,
+    pub method_dropdown: DropdownState<String>,
 }
-#[derive(Default)]
-pub struct ResponseSection {}
-impl ResponseSection {}
+
 impl TabState {
-    pub fn extract(&mut self) -> &ApiRequest {
+    pub fn extractt(&mut self) -> &ApiRequest {
         &self.api_request
     }
     ///This does not handle losing focus. That is handled in the key_action function.
@@ -110,10 +80,28 @@ impl TabState {
     ///The focus of a widget changedd by the postion of the cursor placement.
     pub fn cursor_focus(&mut self, x: usize, y: usize) {}
 }
+#[derive(Default)]
 pub struct Tab;
 impl StatefulWidget for Tab {
     type State = TabState;
-    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {}
+    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {
+        let constraints = vec![Constraint::Percentage(70), Constraint::Fill(1)];
+        let layout = Layout::default()
+            .direction(ratatui::layout::Direction::Vertical)
+            .constraints(constraints)
+            .spacing(Spacing::Overlap(1))
+            .split(area);
+        let top_section = layout[0];
+        let top_constraints = vec![Constraint::Percentage(10), Constraint::Fill(1)];
+        let top_layout = Layout::default()
+            .direction(layout::Direction::Horizontal)
+            .constraints(top_constraints)
+            .spacing(Spacing::Overlap(1))
+            .split(top_section);
+        Dropdown::default().render(top_layout[0], buf, &mut state.method_dropdown);
+        InputBox::default().render(top_layout[1], buf, &mut state.input_box);
+        Table::default().render(layout[1], buf, &mut state.param_table);
+    }
 }
 impl Actionable for TabState {
     fn key_actions(&mut self, action: KeyActions) -> Option<KeyActions> {
@@ -129,4 +117,57 @@ impl Actionable for TabState {
         }
         None
     }
+}
+//Denotes the current category focused within the Tab.
+///Holds all the info required to make an ApiRequest
+
+enum ConversionError {
+    Invalid,
+}
+enum AuthType {}
+///A table you can edit wtih a visual cursor to show.
+struct InputTableState {}
+impl Actionable for TableState {
+    fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
+        None
+    }
+}
+struct CentralizedState {
+    url: InputBoxState,
+    params: HashMap<String, String>,
+    authorization: AuthType,
+    headers: HashMap<String, String>,
+    body: InputBoxState,
+    settings: HashMap<SettingOptions, bool>,
+    focused_section: TabCategory,
+}
+impl CentralizedState {
+    fn try_into_request() -> Result<ApiRequest, ConversionError> {
+        Err(ConversionError::Invalid)
+    }
+}
+impl Actionable for CentralizedState {
+    fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
+        None
+    }
+}
+
+#[derive(Clone, Copy)]
+enum TabCategory {
+    Params,
+    Authorization,
+    Headers,
+    Body,
+    Settings,
+}
+
+enum SettingOptions {}
+
+struct ParamState {}
+
+#[derive(Clone, Copy)]
+enum ResponseCategory {
+    Body,
+    Cookies,
+    Headers,
 }

@@ -51,4 +51,9 @@ pub enum KeyActions {
     Char(char),
     ///Quit out of the application entirely
     Quit,
+    ///When a widget state gets updated the top level application has to know. This might not be
+    ///ideal as it'll be very wordy to write out all the possible states that have to be mangaged.
+    StateChanged,
+    ///Undo the chnage in the current focused widget.
+    Undo,
 }

@@ -45,8 +45,12 @@ pub type KeyMap = HashMap<KeyCode, KeyActions>;
 impl App {
     ///Make an allocation table that doesn't act on raw values but rather layout/rects.
     pub fn new(key_map: KeyMap) -> Self {
-        let dropdown_state =
-            DropdownState::with_items(vec!["A".to_string(), "B".to_string(), "C".to_string()]);
+        let dropdown_state = DropdownState::with_items(vec![
+            "A".to_string(),
+            "B".to_string(),
+            "C".to_string(),
+            "Deeeeeeeeeeeeeeeeeeeeeeee".to_string(),
+        ]);
         Self {
             exit: false,
             key_map,
@@ -63,10 +67,13 @@ impl App {
         Ok(())
     }
     pub fn draw(&mut self, frame: &mut Frame) {
-        frame.render_stateful_widget(Dropdown::default(), frame.area(), &mut self.dropdown_state);
+        let mut area = frame.area();
+        area.width = 10;
+        frame.render_stateful_widget(Dropdown::default(), area, &mut self.dropdown_state);
     }
     pub fn resize() {}
 }
+
 impl App {
     pub fn move_cursor(&mut self) {}
     pub fn hit_test() {}
@@ -83,6 +90,7 @@ impl App {
     }
     pub fn handle_key_events(&mut self, key_event: KeyEvent) {
         let code = key_event.code;
+        let mut additional_action = None;
         if let Some(action) = self.key_map.get(&code) {
             match action {
                 KeyActions::Quit => {
@@ -94,10 +102,24 @@ impl App {
                 KeyActions::Focus(a) => self.focused_widget = a.clone(),
                 _ => match self.focused_widget {
                     WidgetType::InputBox => {
-                        self.dropdown_state.key_actions(*action);
+                        additional_action = self.dropdown_state.key_actions(*action);
                     }
                     _ => {}
                 },
+            }
+        }
+        if let Some(additional) = additional_action {
+            match additional {
+                KeyActions::StateChanged => {
+                    //Poll the current focused widget for the current state and use that to update
+                    //the old info if needed. Widgets should only send this if there is an actual
+                    //change in state. Theoretically the changes will always be present in AppState
+                    //but the issue is it never knows the state changed. We don't want constant
+                    //updates and rather event driven updates.
+                }
+                _ => {
+                    println!("No addtiional action needs to be taken");
+                }
             }
         }
     }

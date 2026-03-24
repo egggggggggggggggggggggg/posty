@@ -133,3 +133,10 @@ impl Widget for &App {
         self.explorer.to_list().render(layout[0], buf);
     }
 }
+
+#[inline(always)]
+pub fn center_constraints() {
+
+}
+#[inline(always)]
+

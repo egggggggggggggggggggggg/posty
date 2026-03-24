@@ -10,6 +10,7 @@ use crate::{key_actions::KeyActions, widgets::Actionable};
 pub trait Displayable {
     fn display(&self) -> &str;
 }
+const METHOD_DROPDOWN_ENTRIES: [&str; 5] = ["GET", "SET", "PATCH", "POST", "DELETE"];
 #[derive(Default)]
 pub struct DropdownState<T: Widget + Clone> {
     selected_item: Option<usize>,
@@ -28,6 +29,7 @@ impl<T: Widget + Clone> Actionable for DropdownState<T> {
             KeyActions::Enter => {
                 if self.expanded {
                     self.commit_selection();
+                    return Some(KeyActions::StateChanged);
                 } else {
                     self.expand();
                 }
@@ -39,7 +41,14 @@ impl<T: Widget + Clone> Actionable for DropdownState<T> {
         None
     }
 }
+///Section containing presets. Uses static str for the consts.
+impl DropdownState<&'static str> {
+    pub fn method_preset() -> Self {
+        Self::with_items(METHOD_DROPDOWN_ENTRIES.to_vec())
+    }
+}
 impl<T: Widget + Clone> DropdownState<T> {
+    ///Arbitrary initialization of data.
     pub fn with_items(items: Vec<T>) -> Self {
         let selected_item = if items.is_empty() { None } else { Some(0) };
 
