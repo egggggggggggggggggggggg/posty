@@ -135,8 +135,4 @@ impl Widget for &App {
 }
 
 #[inline(always)]
-pub fn center_constraints() {
-
-}
-#[inline(always)]
-
+pub fn center_constraints() {}

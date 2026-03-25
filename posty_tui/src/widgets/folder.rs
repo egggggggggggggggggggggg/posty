@@ -207,17 +207,3 @@ fn find_dir<'a>(node: &'a Node, path: &[String]) -> &'a Node {
         }
     }
 }
-pub struct Popup<T: StatefulWidget> {
-    contents: T,
-}
-
-impl<T: StatefulWidget> StatefulWidget for Popup<T> {
-    type State = Self;
-    fn render(
-        self,
-        area: ratatui::prelude::Rect,
-        buf: &mut ratatui::prelude::Buffer,
-        state: &mut Self::State,
-    ) {
-    }
-}

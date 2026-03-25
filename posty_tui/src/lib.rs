@@ -14,21 +14,18 @@ use crate::{
 
 pub mod app;
 pub mod app_rewrite;
+pub mod components;
 pub mod key_actions;
 pub mod tabs;
+pub mod widget_rewrite;
 pub mod widgets;
-
 pub fn run() -> io::Result<()> {
     let mut dropdown_state =
         DropdownState::with_items(vec!["A".to_string(), "B".to_string(), "C".to_string()]);
-    let app_state = AppState {
-        running: false,
-        focused_widget: WidgetType::Dropdown,
-        dropdown_state,
-    };
     let mut app = App::new(default_keymap());
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = Terminal::new(backend)?;
+
     ratatui::run(|terminal| app.run(terminal))?;
 
     Ok(())

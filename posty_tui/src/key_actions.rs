@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crossterm::event::KeyCode;
 
 use crate::widgets::WidgetType;
@@ -56,4 +58,12 @@ pub enum KeyActions {
     StateChanged,
     ///Undo the chnage in the current focused widget.
     Undo,
+}
+pub fn default_keymap() -> HashMap<KeyCode, KeyActions> {
+    let mut map = HashMap::new();
+    map.insert(KeyCode::Up, KeyActions::MoveDirection(Direction::Up));
+    map.insert(KeyCode::Down, KeyActions::MoveDirection(Direction::Down));
+    map.insert(KeyCode::Char('i'), KeyActions::Focus(WidgetType::InputBox));
+    map.insert(KeyCode::Enter, KeyActions::Enter);
+    map
 }

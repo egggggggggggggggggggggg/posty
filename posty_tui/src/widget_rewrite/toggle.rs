@@ -1,14 +1,13 @@
 use ratatui::{
-    prelude::*,
     style::{Modifier, Style},
+    widgets::Widget,
 };
 
-#[derive(Default)]
-pub struct ToggleState {
+struct Toggle {
     symbol: char,
     pub toggled: bool,
 }
-impl ToggleState {
+impl Toggle {
     fn new(symbol: char, toggled: bool) -> Self {
         Self { symbol, toggled }
     }
@@ -18,22 +17,21 @@ impl ToggleState {
             toggled: false,
         }
     }
-    ///Higher level application should handle keys to toggle this.
     fn toggle(&mut self) {
         self.toggled = !self.toggled;
     }
 }
-struct Toggle;
-impl StatefulWidget for Toggle {
-    type State = ToggleState;
-
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let style = if state.toggled {
+impl Widget for &Toggle {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let style = if self.toggled {
             Style::default().add_modifier(Modifier::BOLD)
         } else {
             Style::default()
         };
-        let content = format!("[{}]", state.symbol);
+        let content = format!("[{}]", self.symbol);
         buf.set_string(area.x, area.y, content, style);
     }
 }

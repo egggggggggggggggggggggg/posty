@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use posty::save::ApiRequest;
 use ratatui::{
@@ -72,7 +72,7 @@ pub struct TabState {
 }
 
 impl TabState {
-    pub fn extractt(&mut self) -> &ApiRequest {
+    pub fn extract(&mut self) -> &ApiRequest {
         &self.api_request
     }
     ///This does not handle losing focus. That is handled in the key_action function.
@@ -126,7 +126,6 @@ enum ConversionError {
 }
 enum AuthType {}
 ///A table you can edit wtih a visual cursor to show.
-struct InputTableState {}
 impl Actionable for TableState {
     fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
         None
