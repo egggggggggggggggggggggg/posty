@@ -1,8 +1,14 @@
 use std::collections::HashMap;
 
-use ratatui::widgets::{StatefulWidget, Widget};
+use ratatui::widgets::{Block, BorderType, Padding, StatefulWidget, Widget};
 
-use crate::widgets::input_table::{EditableTable, EditableTableState};
+use crate::{
+    key_actions::KeyActions,
+    widgets::{
+        Actionable,
+        input_table::{EditableTable, EditableTableState},
+    },
+};
 
 pub struct Params {
     table_state: EditableTableState,
@@ -10,7 +16,7 @@ pub struct Params {
 impl Default for Params {
     fn default() -> Self {
         Self {
-            table_state: EditableTableState::new(["key", "value"]),
+            table_state: EditableTableState::new(["Key", "Value"]),
         }
     }
 }
@@ -22,6 +28,29 @@ impl Widget for &mut Params {
     where
         Self: Sized,
     {
-        EditableTable::default().render(area, buf, &mut self.table_state);
+        let block = Block::default()
+            .border_type(BorderType::Rounded)
+            .title(" Query Params ")
+            .padding(Padding::new(1, 1, 1, 1));
+        let inner = block.inner(area);
+        block.render(area, buf);
+        EditableTable::default().render(inner, buf, &mut self.table_state);
+    }
+}
+impl Actionable for Params {
+    fn key_actions(
+        &mut self,
+        key_actions: crate::key_actions::KeyActions,
+    ) -> Option<crate::key_actions::KeyActions> {
+        match key_actions {
+            KeyActions::Char(ch) => match ch {
+                'i' => {
+                    self.
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        None
     }
 }

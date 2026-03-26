@@ -1,7 +1,7 @@
 use ratatui::{
-    layout::Constraint,
+    layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Cell, Row, StatefulWidget, Table, TableState},
+    widgets::{Block, Cell, Paragraph, Row, StatefulWidget, Table, TableState, Widget},
 };
 
 /// A single cell value — extend this enum if you need more types.
@@ -10,10 +10,11 @@ pub enum CellValue {
     Text(String),
     Number(f64),
     Empty,
-    ///Planned support for Dropdown, unsure what needs to be implemented first before this can work
-    ///so just leaving it for now.
+    /// Planned support for Dropdown, unsure what needs to be implemented first before this can work
+    /// so just leaving it for now.
     Dropdown,
 }
+//each column is of only one trait so it should be safe as long as we render under that assumption.
 
 impl CellValue {
     pub fn as_str(&self) -> String {
@@ -47,7 +48,8 @@ impl From<f64> for CellValue {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Owns table data and exposes editing methods.
-/// Call `.widget()` to get a render-ready `Table` + `TableState` pair.
+/// Use the `StatefulWidget` impl (via `EditableTable`) for bordered cell rendering.
+/// The `.widget()` helper renders a plain ratatui `Table` without cell borders.
 #[derive(Default, Debug, Clone)]
 pub struct EditableTableState {
     /// Column header labels.
@@ -143,7 +145,6 @@ impl EditableTableState {
     /// Remove the row at `index` and return it.  Panics if out of bounds.
     pub fn remove_row(&mut self, index: usize) -> Vec<CellValue> {
         let removed = self.rows.remove(index);
-        // Keep selection in bounds
         if let Some(sel) = self.state.selected() {
             if sel >= self.rows.len() && !self.rows.is_empty() {
                 self.state.select(Some(self.rows.len() - 1));
@@ -279,6 +280,8 @@ impl EditableTableState {
         &self.rows
     }
 
+    /// Returns a plain `Table` widget **without** per-cell borders.
+    /// Prefer rendering via `EditableTable` (the `StatefulWidget`) for bordered cells.
     pub fn widget(&self) -> Table<'static> {
         let header_cells: Vec<Cell<'static>> = self
             .headers
@@ -311,44 +314,165 @@ impl EditableTableState {
         table
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 #[derive(Default)]
 pub struct EditableTable;
 
 impl StatefulWidget for EditableTable {
     type State = EditableTableState;
+
     fn render(
         self,
         area: ratatui::prelude::Rect,
         buf: &mut ratatui::prelude::Buffer,
         state: &mut Self::State,
     ) {
-        let header_cells: Vec<Cell<'static>> = state
-            .headers
-            .iter()
-            .map(|h| Cell::from(h.clone()).style(state.header_style))
-            .collect();
-        let header = Row::new(header_cells).height(1).bottom_margin(1);
+        // ── 0. Outer block ────────────────────────────────────────────────────
+        let inner = match &state.block {
+            Some(block) => {
+                let inner = block.inner(area);
+                block.clone().render(area, buf);
+                inner
+            }
+            None => area,
+        };
 
-        let rows: Vec<Row<'static>> = state
-            .rows
-            .iter()
-            .map(|cells| {
-                let cells: Vec<Cell<'static>> = cells
-                    .iter()
-                    .map(|c| Cell::from(c.as_str()).style(state.row_style))
-                    .collect();
-                Row::new(cells)
-            })
-            .collect();
-
-        let mut table = Table::new(rows, state.column_widths.clone())
-            .header(header)
-            .row_highlight_style(state.selected_style)
-            .highlight_symbol("▶ ");
-
-        if let Some(block) = &state.block {
-            table = table.block(block.clone());
+        if inner.is_empty() || state.headers.is_empty() {
+            return;
         }
-        table.render(area, buf, &mut state.state);
+
+        // ── 1. Column geometry ────────────────────────────────────────────────
+        let col_areas: Vec<ratatui::prelude::Rect> =
+            Layout::horizontal(state.column_widths.clone())
+                .split(inner)
+                .to_vec();
+
+        // Each cell is 3 terminal rows tall: top-border + content + bottom-border.
+        // Adjacent rows share one border line, so the y stride is ROW_H - 1 = 2.
+        const ROW_H: u16 = 3;
+        let row_count = 1 + state.rows.len(); // header row + data rows
+
+        // ── 2. Render every cell ──────────────────────────────────────────────
+        for row_idx in 0..row_count {
+            let y = inner.y + row_idx as u16 * (ROW_H - 1);
+            if y + ROW_H > inner.bottom() {
+                break;
+            }
+
+            let is_header = row_idx == 0;
+            let data_idx = row_idx.saturating_sub(1);
+            let is_selected = !is_header && state.state.selected() == Some(data_idx);
+
+            let style = if is_header {
+                state.header_style
+            } else if is_selected {
+                state.selected_style
+            } else {
+                state.row_style
+            };
+
+            for (col_idx, col_area) in col_areas.iter().enumerate() {
+                // Extend non-last columns by 1 so the right border of column N lands on
+                // the same terminal cell as the left border of column N+1.  The later
+                // draw (N+1) wins and both look identical ('│'), giving a single shared
+                // border rather than the ugly double "││" you'd get from two adjacent rects.
+                let cell_width = if col_idx + 1 < col_areas.len() {
+                    col_areas[col_idx + 1].x - col_area.x + 1
+                } else {
+                    inner.right() - col_area.x
+                };
+
+                let cell_rect = ratatui::prelude::Rect {
+                    x: col_area.x,
+                    y,
+                    width: cell_width,
+                    height: ROW_H,
+                };
+
+                Block::bordered().border_style(style).render(cell_rect, buf);
+
+                // Text goes in the true interior (left-border+1 … shared-border-1).
+                let content_rect = Block::bordered().inner(cell_rect);
+                let text = if is_header {
+                    state.headers.get(col_idx).cloned().unwrap_or_default()
+                } else {
+                    state
+                        .rows
+                        .get(data_idx)
+                        .and_then(|r| r.get(col_idx))
+                        .map(CellValue::as_str)
+                        .unwrap_or_default()
+                };
+
+                Paragraph::new(text).style(style).render(content_rect, buf);
+            }
+        }
+
+        // ── 3. Fix junction characters ────────────────────────────────────────
+        //
+        // After the cell pass every crossing contains the corner glyph of whichever
+        // cell was rendered last.  We overwrite those positions with the correct
+        // box-drawing character for their structural role.
+        //
+        //   top edge + internal col   →  ┬
+        //   bottom edge + internal col →  ┴
+        //   internal row + left edge  →  ├
+        //   internal row + right edge →  ┤
+        //   internal row + internal col → ┼
+
+        // y of the grid's bottom border
+        let grid_bottom = inner.y + row_count as u16 * (ROW_H - 1);
+
+        // Top edge: ┬ at every internal column x
+        for col in col_areas.iter().skip(1) {
+            if let Some(cell) = buf.cell_mut((col.x, inner.y)) {
+                cell.set_symbol("┬");
+            }
+        }
+
+        // Bottom edge: ┴ at every internal column x
+        if grid_bottom < inner.bottom() {
+            for col in col_areas.iter().skip(1) {
+                if let Some(cell) = buf.cell_mut((col.x, grid_bottom)) {
+                    cell.set_symbol("┴");
+                }
+            }
+        }
+
+        // Interior horizontal seams (between rows)
+        for row_idx in 1..row_count {
+            let seam_y = inner.y + row_idx as u16 * (ROW_H - 1);
+            if seam_y >= inner.bottom() {
+                break;
+            }
+
+            // Left edge  ├
+            if let Some(cell) = buf.cell_mut((inner.x, seam_y)) {
+                cell.set_symbol("├");
+            }
+            // Right edge  ┤
+            if let Some(cell) = buf.cell_mut((inner.right() - 1, seam_y)) {
+                cell.set_symbol("┤");
+            }
+            // Every internal column crossing  ┼
+            for col in col_areas.iter().skip(1) {
+                if let Some(cell) = buf.cell_mut((col.x, seam_y)) {
+                    cell.set_symbol("┼");
+                }
+            }
+        }
+
+        // ── 4. Selection indicator ────────────────────────────────────────────
+        if let Some(sel) = state.state.selected() {
+            // +1 skips the header row; +1 again lands on the content line
+            let indicator_y = inner.y + (sel as u16 + 1) * (ROW_H - 1) + 1;
+            if indicator_y < inner.bottom() {
+                if let Some(cell) = buf.cell_mut((inner.x + 1, indicator_y)) {
+                    cell.set_symbol("▶");
+                }
+            }
+        }
     }
 }

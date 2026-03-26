@@ -6,7 +6,7 @@ use crossterm::{
 };
 use ratatui::{
     DefaultTerminal, Frame,
-    layout::{Constraint, Layout},
+    layout::{Constraint, Direction, Layout},
     widgets::{Block, StatefulWidget, Widget},
 };
 use reqwest::{get, redirect::Action};
@@ -94,12 +94,15 @@ impl Widget for &mut AppState {
         Self: Sized,
     {
         let vert_constraints = vec![
+            Constraint::Percentage(7),
             Constraint::Percentage(10),
-            Constraint::Percentage(20),
             Constraint::Fill(1),
         ];
         let block = Block::default().title("App testing").inner(area);
-        let layout = Layout::default();
-        self.tab_view.render(area, buf);
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vert_constraints)
+            .split(area);
+        self.tab_view.render(layout[2], buf);
     }
 }

@@ -33,7 +33,7 @@ impl Widget for &UrlBar {
         Self: Sized,
     {
         let block = Block::new()
-            .title("URL Info")
+            .title(" Url Info ")
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .padding(Padding::new(1, 1, 0, 0));

@@ -165,7 +165,7 @@ impl<T: Widget + Clone> Widget for &Dropdown<T> {
             }
             // Draw a simple ▼ arrow on the right
             if area.width > 2 {
-                buf.get_mut(area.right() - 1, area.top()).set_symbol("▼");
+                buf.get_mut(area.right() - 1, area.top()).set_symbol("");
             }
             return;
         }

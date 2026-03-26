@@ -3,7 +3,8 @@ use std::path::Component;
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::Style,
-    widgets::{Block, Borders, StatefulWidget, Widget},
+    symbols::merge::MergeStrategy,
+    widgets::{Block, BorderType, Borders, StatefulWidget, Widget},
 };
 
 use crate::{
@@ -34,7 +35,10 @@ pub struct TabView {
     headers: Headers,
     settings: Settings,
     auth: Auth,
+    //Visible component, exlucdes UrlBar.
     focused_component: Option<ComponentType>,
+    //Component that has the focus, eg the component that input gets sent to.
+    active_component: Option<ComponentType>,
 }
 
 impl Widget for &mut TabView {
@@ -43,30 +47,30 @@ impl Widget for &mut TabView {
         Self: Sized,
     {
         let constraints = vec![Constraint::Max(1), Constraint::Max(5), Constraint::Fill(1)];
-        let block = Block::default().borders(Borders::ALL).title("Request form");
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .title(" Request Form ");
         let inner_area = block.inner(area);
         let layout = Layout::new(Direction::Vertical, constraints).split(inner_area);
-        self.tab_bar.push(Tab {
-            title: "Test".to_string(),
-            modified: false,
-        });
         TabBar::default().render(area, buf, &mut self.tab_bar);
+        let block_inner = block.inner(layout[2]);
+        block.render(layout[2], buf);
         self.url.render(layout[1], buf);
         if let Some(focused) = &self.focused_component {
             match focused {
                 ComponentType::Params => {
-                    self.params.render(layout[2], buf);
+                    self.params.render(block_inner, buf);
                 }
                 ComponentType::Auth => {
-                    self.auth.render(layout[2], buf);
+                    self.auth.render(block_inner, buf);
                 }
                 ComponentType::Headers => {
-                    self.headers.render(layout[2], buf);
+                    self.headers.render(block_inner, buf);
                 }
                 ComponentType::Settings => {
-                    self.settings.render(layout[2], buf);
+                    self.settings.render(block_inner, buf);
                 }
-                ComponentType::UrlBar => {}
                 _ => {
                     panic!("This components is not part of this component. ");
                 }
@@ -79,7 +83,7 @@ impl Actionable for TabView {
         &mut self,
         key_actions: crate::key_actions::KeyActions,
     ) -> Option<crate::key_actions::KeyActions> {
-        if let Some(comp) = &self.focused_component {
+        if let Some(comp) = &self.active_component {
             match comp {
                 ComponentType::UrlBar => {
                     self.url.key_actions(key_actions.clone());
@@ -92,11 +96,23 @@ impl Actionable for TabView {
         }
         match key_actions {
             KeyActions::Char(ch) => match ch {
-                'p' => self.focused_component = Some(ComponentType::Params),
-                'a' => self.focused_component = Some(ComponentType::Auth),
-                'h' => self.focused_component = Some(ComponentType::Headers),
-                's' => self.focused_component = Some(ComponentType::Settings),
-                'u' => self.focused_component = Some(ComponentType::UrlBar),
+                'p' => {
+                    self.active_component = Some(ComponentType::Params);
+                    self.focused_component = Some(ComponentType::Params);
+                }
+                'a' => {
+                    self.active_component = Some(ComponentType::Auth);
+                    self.focused_component = Some(ComponentType::Auth);
+                }
+                'h' => {
+                    self.active_component = Some(ComponentType::Headers);
+                    self.focused_component = Some(ComponentType::Headers);
+                }
+                's' => {
+                    self.active_component = Some(ComponentType::Settings);
+                    self.focused_component = Some(ComponentType::Settings);
+                }
+                'u' => self.active_component = Some(ComponentType::UrlBar),
                 _ => {
                     println!("This key is not supported for this component.");
                 }

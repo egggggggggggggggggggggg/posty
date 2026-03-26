@@ -2,6 +2,7 @@ use crate::key_actions::KeyActions;
 
 ///Rewriting cause a lot of the widgets I wrote didn't require a seperate state struct.
 pub mod dropdown;
+pub mod i_table;
 pub mod input_box;
 pub mod input_table;
 pub mod tabs;
