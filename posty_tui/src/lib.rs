@@ -11,12 +11,12 @@ use crate::{
         dropdown::{Dropdown, DropdownState},
     },
 };
-
 pub mod app;
 pub mod app_rewrite;
 pub mod components;
 pub mod key_actions;
 pub mod tabs;
+pub mod themes;
 pub mod widget_rewrite;
 pub mod widgets;
 pub fn run() -> io::Result<()> {

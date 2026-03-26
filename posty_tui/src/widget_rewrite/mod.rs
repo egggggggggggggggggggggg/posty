@@ -2,6 +2,7 @@
 pub mod dropdown;
 pub mod input_box;
 pub mod input_table;
+pub mod tabs;
 pub mod toggle;
 pub mod tree;
 enum WidgetType {
