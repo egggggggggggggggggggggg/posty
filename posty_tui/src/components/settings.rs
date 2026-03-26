@@ -1,5 +1,5 @@
 use ratatui::widgets::{Scrollbar, ScrollbarOrientation, ScrollbarState, Widget};
-
+#[derive(Default)]
 pub struct Settings {}
 impl Widget for &Settings {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)

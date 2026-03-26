@@ -59,11 +59,21 @@ pub enum KeyActions {
     ///Undo the chnage in the current focused widget.
     Undo,
 }
+///For a given widget, it returns the keys needed to interact with it. This is definitely just
+///gonna be a big match statement unless I change how I implement the Ui rendering strat.
+pub fn keybinds_for_widget() {}
+pub type KeyMap = HashMap<KeyCode, KeyActions>;
+
 pub fn default_keymap() -> HashMap<KeyCode, KeyActions> {
     let mut map = HashMap::new();
     map.insert(KeyCode::Up, KeyActions::MoveDirection(Direction::Up));
     map.insert(KeyCode::Down, KeyActions::MoveDirection(Direction::Down));
-    map.insert(KeyCode::Char('i'), KeyActions::Focus(WidgetType::InputBox));
+    map.insert(KeyCode::Right, KeyActions::MoveDirection(Direction::Right));
+    map.insert(KeyCode::Left, KeyActions::MoveDirection(Direction::Left));
     map.insert(KeyCode::Enter, KeyActions::Enter);
+    for alphabet in ' '..='~' {
+        map.insert(KeyCode::Char(alphabet), KeyActions::Char(alphabet));
+    }
+    map.insert(KeyCode::Char('q'), KeyActions::Quit);
     map
 }

@@ -8,3 +8,4 @@ posty = {path = "../posty"}
 color-eyre = "0.6.5"
 crossterm = "0.29.0"
 ratatui = {version = "0.30.0"} 
+reqwest = "0.13.2"

@@ -48,7 +48,7 @@ impl From<f64> for CellValue {
 
 /// Owns table data and exposes editing methods.
 /// Call `.widget()` to get a render-ready `Table` + `TableState` pair.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct EditableTableState {
     /// Column header labels.
     headers: Vec<String>,
@@ -352,4 +352,3 @@ impl StatefulWidget for EditableTable {
         table.render(area, buf, &mut state.state);
     }
 }
-

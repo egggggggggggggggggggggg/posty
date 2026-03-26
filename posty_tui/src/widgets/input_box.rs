@@ -1,21 +1,36 @@
 use ratatui::{
+    layout::Position,
     prelude::*,
-    widgets::{Block, Borders, StatefulWidget},
+    style::{Color, Style},
+    text::Line,
+    widgets::{Block, Borders, Widget},
 };
 
 use crate::{
     key_actions::{Direction, KeyActions},
     widgets::Actionable,
 };
+
 #[derive(Default)]
-pub struct InputBoxState {
+pub struct InputBox {
     left: Vec<char>,
-    right: Vec<char>, // stored reversed
+    right: Vec<char>,
+    ghost_text: &'static str,
 }
-impl InputBoxState {
+impl InputBox {
+    pub fn with_ghost_text(ghost_text: &'static str) {
+        Self::default().ghost_text = ghost_text;
+    }
+}
+impl InputBox {
     pub fn new() -> Self {
         Self::default()
     }
+    /// Checks if the InputBox contains anything.
+    pub fn contains_text(&self) -> bool {
+        !self.left.is_empty() || !self.right.is_empty()
+    }
+
     // Insert at cursor
     pub fn insert_char(&mut self, c: char) {
         self.left.push(c);
@@ -67,19 +82,25 @@ impl InputBoxState {
         self.left.len()
     }
 }
-#[derive(Default)]
-pub struct InputBox;
-impl StatefulWidget for InputBox {
-    type State = InputBoxState;
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+impl Widget for &InputBox {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let block = Block::default().borders(Borders::ALL).title("Input");
         block.clone().render(area, buf);
         let inner = block.inner(area);
-        let content = state.content();
-        let text = Line::from(content);
+
+        let (content, style) = if self.contains_text() {
+            (self.content(), Style::default())
+        } else {
+            (
+                self.ghost_text.to_string(),
+                Style::default().fg(Color::DarkGray),
+            )
+        };
+
+        let text = Line::from(content).style(style);
         buf.set_line(inner.x, inner.y, &text, inner.width);
-        // Cursor rendering
-        let cursor_x = inner.x + state.cursor() as u16;
+
+        let cursor_x = inner.x + self.cursor() as u16;
         let cursor_y = inner.y;
 
         if cursor_x < inner.x + inner.width {
@@ -89,7 +110,7 @@ impl StatefulWidget for InputBox {
         }
     }
 }
-impl Actionable for InputBoxState {
+impl Actionable for InputBox {
     fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions> {
         match key_actions {
             KeyActions::Char(ch) => {

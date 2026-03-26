@@ -1,10 +1,10 @@
 use ratatui::widgets::{StatefulWidget, Widget};
 
-use crate::widget_rewrite::{
+use crate::widgets::{
     dropdown::Dropdown,
     input_table::{EditableTable, EditableTableState},
 };
-
+#[derive(Default)]
 pub struct Headers {
     table_state: EditableTableState,
 }

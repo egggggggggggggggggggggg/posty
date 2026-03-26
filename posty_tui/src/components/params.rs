@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::widgets::{StatefulWidget, Widget};
 
-use crate::widget_rewrite::input_table::{EditableTable, EditableTableState};
+use crate::widgets::input_table::{EditableTable, EditableTableState};
 
 pub struct Params {
     table_state: EditableTableState,

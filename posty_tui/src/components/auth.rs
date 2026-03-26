@@ -1,5 +1,5 @@
 use ratatui::widgets::Widget;
-
+#[derive(Default)]
 pub struct Auth {}
 impl Widget for &Auth {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
