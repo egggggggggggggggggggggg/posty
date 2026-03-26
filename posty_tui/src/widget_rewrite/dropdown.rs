@@ -26,6 +26,17 @@ impl Dropdown<&'static str> {
     pub fn preset_auth() -> Self {
         Self::with_items([""].to_vec())
     }
+    ///Returns the length of the longesxt item. This allows us to allocate the right amount of
+    ///space for the dropdown. Just a linear search as the data isn't stored in any particular
+    ///order. This only works for string types. Other T types have some level of nesting to reach
+    ///the string.
+    pub fn longest_item(&self) -> usize {
+        let mut longest = 0;
+        for i in &self.items {
+            longest = longest.max(i.len());
+        }
+        longest
+    }
 }
 
 impl<T: Widget + Clone> Dropdown<T> {
@@ -38,7 +49,6 @@ impl<T: Widget + Clone> Dropdown<T> {
             expanded: false,
         }
     }
-
     /// Toggle expand/collapse
     pub fn expand(&mut self) {
         self.expanded = !self.expanded;
