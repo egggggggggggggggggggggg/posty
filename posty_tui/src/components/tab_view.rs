@@ -13,10 +13,7 @@ use crate::{
         url_bar::UrlBar,
     },
     key_actions::KeyActions,
-    widgets::{
-        Actionable,
-        tabs::{Tab, TabBar, TabBarState},
-    },
+    widgets::{Actionable, tab_bar::TabBar},
 };
 #[derive(Default)]
 pub enum FocusedCategory {
@@ -29,7 +26,7 @@ pub enum FocusedCategory {
 ///An actual physical tab containing the important field stuff to assemble an ApiRequest.
 #[derive(Default)]
 pub struct TabView {
-    tab_bar: TabBarState,
+    tab_bar: TabBar,
     url: UrlBar,
     params: Params,
     headers: Headers,
@@ -53,7 +50,13 @@ impl Widget for &mut TabView {
             .title(" Request Form ");
         let inner_area = block.inner(area);
         let layout = Layout::new(Direction::Vertical, constraints).split(inner_area);
-        TabBar::default().render(area, buf, &mut self.tab_bar);
+
+        self.tab_bar.push(crate::widgets::tab_bar::Tab {
+            title: "wefwfwfwwfewfew".to_string(),
+            modified: false,
+            max: 8,
+        });
+        self.tab_bar.render(layout[0], buf);
         let block_inner = block.inner(layout[2]);
         block.render(layout[2], buf);
         self.url.render(layout[1], buf);

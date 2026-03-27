@@ -1,10 +1,15 @@
+use ratatui::widgets::Widget;
+
 use crate::key_actions::KeyActions;
 
 ///Rewriting cause a lot of the widgets I wrote didn't require a seperate state struct.
 pub mod dropdown;
+pub mod form;
 pub mod i_table;
 pub mod input_box;
 pub mod input_table;
+pub mod tab_bar;
+pub mod table;
 pub mod tabs;
 pub mod toggle;
 pub mod tree;
@@ -35,4 +40,10 @@ pub trait Focusable {
 ///where we normally wouldn't want anything to happen. (Flexibility mainly is the reason for this).
 pub trait Actionable {
     fn key_actions(&mut self, key_actions: KeyActions) -> Option<KeyActions>;
+}
+///Styled rendering if we ever do wanna implement it. This allows for configuring it.
+pub trait StyledWidget: Widget {
+    fn is_styled(&self) -> bool;
+    fn render_styled(&mut self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer);
+    fn render_def(&mut self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer);
 }

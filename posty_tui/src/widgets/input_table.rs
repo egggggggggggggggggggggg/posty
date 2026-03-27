@@ -71,27 +71,6 @@ impl EditableTableState {
     // ── constructors ─────────────────────────────────────────────────────────
 
     /// Create an empty table with the given column headers.
-    pub fn new(headers: impl IntoIterator<Item = impl Into<String>>) -> Self {
-        let headers: Vec<String> = headers.into_iter().map(Into::into).collect();
-        let col_count = headers.len();
-
-        Self {
-            headers,
-            rows: Vec::new(),
-            state: TableState::default(),
-            header_style: Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD),
-            row_style: Style::default(),
-            selected_style: Style::default()
-                .bg(Color::Blue)
-                .fg(Color::White)
-                .add_modifier(Modifier::BOLD),
-            column_widths: vec![Constraint::Percentage(100 / col_count as u16); col_count],
-            block: None,
-        }
-    }
-
     /// Seed the table with initial rows (length must match header count).
     pub fn with_rows(
         mut self,

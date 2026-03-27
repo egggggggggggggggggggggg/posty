@@ -3,15 +3,15 @@ use ratatui::{
     widgets::Widget,
 };
 
-struct Toggle {
+pub struct Toggle {
     symbol: char,
     pub toggled: bool,
 }
 impl Toggle {
-    fn new(symbol: char, toggled: bool) -> Self {
+    pub fn new(symbol: char, toggled: bool) -> Self {
         Self { symbol, toggled }
     }
-    fn with_symbol(symbol: char) -> Self {
+    pub fn with_symbol(symbol: char) -> Self {
         Self {
             symbol,
             toggled: false,

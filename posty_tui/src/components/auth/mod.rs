@@ -1,4 +1,6 @@
 use ratatui::widgets::Widget;
+
+use crate::widgets::WidgetType;
 #[derive(Default)]
 pub struct Auth {}
 impl Widget for &Auth {

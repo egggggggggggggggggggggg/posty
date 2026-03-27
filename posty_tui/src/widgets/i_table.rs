@@ -29,9 +29,4 @@ impl ITableState {
     pub fn new(headers: impl IntoIterator<Item = impl Into<String>>) {
         let headers: Vec<String> = vec![];
     }
-    ///Returns back a hashmap over the values.
-    ///
-    pub fn extract(&self) {
-        //
-    }
 }

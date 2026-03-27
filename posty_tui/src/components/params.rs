@@ -44,9 +44,8 @@ impl Actionable for Params {
     ) -> Option<crate::key_actions::KeyActions> {
         match key_actions {
             KeyActions::Char(ch) => match ch {
-                'i' => {
-                    self.
-                }
+                'i' => {}
+
                 _ => {}
             },
             _ => {}

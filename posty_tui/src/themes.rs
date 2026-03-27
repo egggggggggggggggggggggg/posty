@@ -1,4 +1,21 @@
 use ratatui::style::Color;
+///For each widget, it should be possible to pass in a series of configuration options to customize
+///them.
+#[derive(Clone, Copy, Debug)]
+struct WidgetTheme {
+    ///Color of the border around the widget if it does exist.
+    border_color: Color,
+    ///Background of the widget
+    bg: Color,
+    ///Foreground of the widget.
+    fg: Color,
+    ///Series of specific component colors. The Component/Widget reads the speicfied field it needs for a
+    ///given widget.
+    bar: Color,
+
+    ///Color of text.
+    text_color: Color,
+}
 
 #[derive(Debug, Clone)]
 pub struct TabBarTheme {
@@ -21,6 +38,14 @@ pub struct TabBarTheme {
     /// Colour of the `◀` / `▶` scroll overflow arrows.
     pub scroll_indicator_fg: Color,
 }
+pub struct TuiTheme {
+    pub term_bg: Color,
+    pub border_bg: Color,
+    pub text_bg: TextTheme,
+    //Two colors for the bar so it can be blended.
+    pub bar_range: (Color, Color),
+}
+pub struct TextTheme {}
 
 impl TabBarTheme {
     /// Catppuccin Latte (light)
