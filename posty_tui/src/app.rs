@@ -1,28 +1,17 @@
-use std::fmt::format;
-use std::io::{self, stdout};
-use std::ops::Div;
-use std::panic;
+use std::io::{self};
 use std::time::Duration;
 
-use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
-    execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
-};
-use ratatui::widgets::Widget;
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
+    style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::Paragraph,
 };
-use ratatui::{layout, text};
-use tokio::sync::mpsc;
-use tokio::time;
 
 use crate::Mode;
+use crate::commands::CommandPopup;
 
 const TICK_RATE: Duration = Duration::from_millis(250);
 const POLL_RATE: Duration = Duration::from_millis(50);
@@ -33,6 +22,7 @@ pub struct App {
     pub messages: Vec<String>,
     pub tick_count: u64,
     pub current_mode: Mode,
+    pub command_page: CommandPopup,
 }
 
 impl App {
@@ -42,6 +32,7 @@ impl App {
             messages: vec!["App started! Press +/- to change counter, q to quit.".into()],
             tick_count: 0,
             current_mode: Mode::default(),
+            command_page: CommandPopup::default(),
         }
     }
     pub fn increment(&mut self) {
@@ -74,7 +65,10 @@ pub fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) ->
                 Constraint::Length(1),
             ])
             .split(area);
-        if let Mode::Normal = app.current_mode {}
+        if let Mode::Command = app.current_mode {
+            frame.render_widget(&app.command_page, area);
+        }
+
         let (text, bg) = match app.current_mode {
             Mode::Normal => (" NORMAL ", Color::Rgb(144, 213, 255)),
             Mode::Execute => (" EXECUTE ", Color::Green),

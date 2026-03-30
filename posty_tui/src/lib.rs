@@ -1,6 +1,6 @@
 use std::{io, time::Duration};
 
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, MouseEvent};
 use ratatui::{Terminal, prelude::CrosstermBackend};
 use tokio::{sync::mpsc, time};
 
@@ -22,6 +22,7 @@ pub enum Mode {
 enum AppEvent {
     Key(KeyCode),
     Tick,
+    Mouse(MouseEvent),
 }
 
 pub async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
@@ -44,22 +45,7 @@ pub async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::R
 
     // Spawn a blocking task that reads crossterm key events and forwards them
     tokio::task::spawn_blocking(move || {
-        loop {
-            // poll with a short timeout so the thread stays responsive
-            if event::poll(Duration::from_millis(5)).unwrap_or(false) {
-                if let Ok(Event::Key(key)) = event::read() {
-                    if key.kind == KeyEventKind::Press {
-                        if tx.blocking_send(AppEvent::Key(key.code)).is_err() {
-                            break;
-                        }
-                        // Let the main loop decide when to quit
-                        if key.code == KeyCode::Char('q') {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        let _ = event_loop(tx.clone());
     });
 
     // Custom run loop — no ratatui built-in loop involved
@@ -76,19 +62,44 @@ pub async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::R
             Some(AppEvent::Key(KeyCode::Esc)) => {
                 app.current_mode = Mode::Normal;
             }
-            Some(AppEvent::Key(KeyCode::Char('e'))) => {
-                app.current_mode = Mode::Execute;
+            Some(AppEvent::Key(key)) => {
+                if let Mode::Normal = app.current_mode {
+                    match key {
+                        KeyCode::Char('e') => app.current_mode = Mode::Execute,
+                        KeyCode::Char('m') => app.current_mode = Mode::Modify,
+                        KeyCode::Char('p') => app.current_mode = Mode::Performance,
+                        KeyCode::Char(':') => app.current_mode = Mode::Command,
+                        _ => {}
+                    }
+                }
             }
-            Some(AppEvent::Key(KeyCode::Char('m'))) => {
-                app.current_mode = Mode::Modify;
+            Some(AppEvent::Mouse(_m)) => {}
+        }
+    }
+    Ok(())
+}
+use tokio::sync::mpsc::Sender;
+
+fn event_loop(tx: Sender<AppEvent>) -> std::io::Result<()> {
+    loop {
+        if event::poll(Duration::from_millis(5))? {
+            let event = event::read()?;
+            if let Event::Key(key) = event {
+                if key.kind == KeyEventKind::Press {
+                    if tx.blocking_send(AppEvent::Key(key.code)).is_err() {
+                        break;
+                    }
+
+                    if key.code == KeyCode::Char('q') {
+                        break;
+                    }
+                }
             }
-            Some(AppEvent::Key(KeyCode::Char('p'))) => {
-                app.current_mode = Mode::Performance;
+            if let Event::Mouse(mouse) = event {
+                if tx.blocking_send(AppEvent::Mouse(mouse)).is_err() {
+                    break;
+                }
             }
-            Some(AppEvent::Key(KeyCode::Char('c'))) => {
-                app.current_mode = Mode::Command;
-            }
-            _ => {}
         }
     }
     Ok(())

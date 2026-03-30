@@ -1,11 +1,15 @@
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use posty_tui::run;
 use ratatui::{Terminal, prelude::CrosstermBackend};
 
+use crossterm::{
+    ExecutableCommand,
+    cursor::{DisableBlinking, EnableBlinking, MoveTo, RestorePosition, SavePosition},
+};
 use std::io::{self, stdout};
 use std::time::Duration;
 
@@ -13,7 +17,9 @@ use std::time::Duration;
 async fn main() -> io::Result<()> {
     // Set up terminal
     enable_raw_mode()?;
-    execute!(stdout(), EnterAlternateScreen)?;
+
+    execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture)?;
+
     let backend = CrosstermBackend::new(stdout());
     let mut terminal = Terminal::new(backend)?;
 
@@ -21,7 +27,11 @@ async fn main() -> io::Result<()> {
 
     // Restore terminal regardless of outcome
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     terminal.show_cursor()?;
 
     result

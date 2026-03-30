@@ -1,7 +1,12 @@
+use ratatui::prelude::*;
+use ratatui::widgets::{Block, Borders, Widget};
+
 #[derive(Default)]
 pub struct InputBox {
     pub left: Vec<char>,
     pub right: Vec<char>,
+    ///This is shown after the end of the right hand side.
+    pub ghost_text: String,
 }
 impl InputBox {
     pub fn new() -> Self {
@@ -62,5 +67,42 @@ impl InputBox {
     pub fn cursor(&self) -> usize {
         self.left.len()
     }
+    pub fn ghost_text(&mut self, new_ghost: String) {
+        self.ghost_text = new_ghost;
+    }
 }
+impl Widget for &InputBox {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let block = Block::default().borders(Borders::ALL).title("Input");
+        block.clone().render(area, buf);
+        let inner = block.inner(area);
 
+        let content = self.content();
+
+        let end_of_buffer = content.len();
+        let style = Style::default().fg(Color::White);
+        let text = Line::from(content).style(style);
+
+        let ghost_content = self.ghost_text.clone();
+        let ghost_style = Style::default().fg(Color::Gray);
+        let ghost_text = Line::from(ghost_content).style(ghost_style);
+
+        buf.set_line(inner.x, inner.y, &text, inner.width);
+
+        let cursor_x = inner.x + self.cursor() as u16;
+        let cursor_y = inner.y;
+
+        buf.set_line(
+            end_of_buffer as u16 + inner.x,
+            inner.y,
+            &ghost_text,
+            inner.width,
+        );
+
+        if cursor_x < inner.x + inner.width {
+            buf.cell_mut(Position::new(cursor_x, cursor_y))
+                .expect("Cell could not be acquired for some reason")
+                .set_style(Style::default().bg(Color::White).fg(Color::Black));
+        }
+    }
+}

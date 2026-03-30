@@ -1,4 +1,9 @@
-use ratatui::widgets::Widget;
+use ratatui::{
+    layout::Constraint,
+    style::{Color, Style},
+    text::Text,
+    widgets::{Block, Widget},
+};
 
 use crate::input_field::InputBox;
 //Lots of comments here but these are just ideas to flesh out later. Will remove when implemented.
@@ -88,7 +93,14 @@ impl<'a> TraversalState<'a> {
 pub enum TokenKind {
     Literal(String),
     ///Anything that doesn't fall under a literal.
-    Argument,
+    Argument(Argument),
+    ///Cannot be recognized as a literal.
+    Malformed(String),
+}
+impl TokenKind {
+    fn new(val: String) -> Self {
+        TokenKind::Literal(val)
+    }
 }
 impl TokenKind {
     ///Can the token continue turning into a literal. Before searching for a literal match, this
@@ -98,7 +110,15 @@ impl TokenKind {
     pub fn closest_literal() {}
     ///Returns the best match based off of context(previous tokens) and the token that matches the
     ///current prefix.
-    pub fn best_literal_match(last_token: TokenKind, prefix: Vec<char>) {}
+    pub fn best_literal_match(
+        last_token: &Option<&TokenKind>,
+        prefix: Vec<char>,
+    ) -> (Option<TokenKind>, String) {
+        (
+            Some(TokenKind::Literal("Test".to_string())),
+            "remaining".to_string(),
+        )
+    }
 }
 
 #[derive(Default)]
@@ -109,7 +129,8 @@ pub struct CommandPopup {
     ///to provide auto complete.
     is_arg: bool,
     current_token: Vec<char>,
-    tokens: Vec<String>,
+    tokens: Vec<TokenKind>,
+    current_warning: Option<Warning>,
 }
 
 impl CommandPopup {
@@ -152,22 +173,71 @@ impl CommandPopup {
             self.current_token.push(c);
             self.is_space = false;
         }
+        //Get it to return a vec of the best matches aswell to mimic a lsp completion bar.
+        let (best_match, remaining) =
+            TokenKind::best_literal_match(&self.tokens.last(), self.current_token.clone());
+        if let None = best_match {
+            self.current_warning = Some(Warning::new(
+                "placeholder".to_string(),
+                WarningKind::Unrecognized,
+            ));
+        }
+        self.inner.ghost_text(remaining);
         self.inner.insert_char(c);
     }
+
     pub fn collect_token(&mut self) {
         if !self.current_token.is_empty() {
             let token: String = std::mem::take(&mut self.current_token)
                 .into_iter()
                 .collect();
-            self.tokens.push(token);
+            //Do some validation of the token before pushing it into the stream.
+            self.tokens.push(TokenKind::new(token));
         }
+    }
+    pub fn clear(&mut self) {
+        self.inner.clear();
+    }
+}
+struct Warning {
+    content: String,
+    kind: WarningKind,
+}
+impl Warning {
+    fn new(content: String, kind: WarningKind) -> Self {
+        Self { content, kind }
     }
 }
 
-impl Widget for CommandPopup {
+enum WarningKind {
+    Unrecognized,
+    IncorrectArg,
+}
+impl Warning {
+    fn to_block(&self) -> Text<'static> {
+        let block_color = match self.kind {
+            WarningKind::Unrecognized => Color::Red,
+            WarningKind::IncorrectArg => Color::Green,
+        };
+        Text::from(self.content.clone()).style(Style::default().fg(block_color))
+    }
+}
+
+impl Widget for &CommandPopup {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
+        let popup_width = Constraint::Percentage(40);
+        let popup_height = Constraint::Length(3);
+        let mut centered = area.centered(popup_width, popup_height);
+        "󰗁".render(centered, buf);
+        centered.x += 1;
+        self.inner.render(centered, buf);
+        if let Some(warn) = &self.current_warning {
+            centered.x -= 1;
+            centered.y += 1;
+            warn.to_block().render(centered, buf);
+        }
     }
 }
