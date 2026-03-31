@@ -22,9 +22,7 @@ async fn main() -> io::Result<()> {
 
     let backend = CrosstermBackend::new(stdout());
     let mut terminal = Terminal::new(backend)?;
-
     let result = run(&mut terminal).await;
-
     // Restore terminal regardless of outcome
     disable_raw_mode()?;
     execute!(

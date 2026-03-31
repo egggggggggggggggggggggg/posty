@@ -1,6 +1,15 @@
+use std::default;
 use std::io::{self};
 use std::time::Duration;
 
+use crate::action::Actionable;
+use crate::commands::CommandPopup;
+use crate::text_editor::{TextEditor, TextEditorState};
+use crate::{AppEvent, Mode};
+use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent};
+use crossterm::terminal;
+use ratatui::style::Modifier;
+use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -9,64 +18,144 @@ use ratatui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
-
-use crate::Mode;
-use crate::commands::CommandPopup;
+use tokio::sync::mpsc::Receiver;
 
 const TICK_RATE: Duration = Duration::from_millis(250);
 const POLL_RATE: Duration = Duration::from_millis(50);
 // ----- App state -----
 
+pub enum Pages {}
+
+#[derive(Default)]
+struct ApiRequest {}
+
 pub struct App {
+    pub exit: bool,
     pub counter: i64,
-    pub messages: Vec<String>,
     pub tick_count: u64,
     pub current_mode: Mode,
     pub command_page: CommandPopup,
+    pub editor: TextEditorState,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
+            exit: false,
             counter: 0,
-            messages: vec!["App started! Press +/- to change counter, q to quit.".into()],
             tick_count: 0,
             current_mode: Mode::default(),
             command_page: CommandPopup::default(),
+            editor: TextEditorState::new(),
         }
     }
-    pub fn increment(&mut self) {
-        self.counter += 1;
-        self.messages
-            .push(format!("Incremented → {}", self.counter));
+    pub async fn run(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+        rx: &mut Receiver<AppEvent>,
+    ) -> io::Result<()> {
+        while !self.exit {
+            draw(terminal, self)?;
+            match rx.recv().await {
+                Some(app_event) => {
+                    if let AppEvent::Event(event) = app_event {
+                        self.handle_events(event);
+                    } else {
+                    }
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+        Ok(())
     }
+    pub fn handle_events(&mut self, event: Event) {
+        match event {
+            Event::FocusLost => {}
+            Event::Key(k) => self.handle_key(k),
+            Event::Mouse(m) => self.handle_mouse(m),
+            _ => {}
+        }
+    }
+    pub fn handle_mouse(&mut self, m: MouseEvent) {}
+    pub fn handle_key(&mut self, k: KeyEvent) {
+        if k.is_press() {
+            let key = k.code;
+            match key {
+                KeyCode::Char(a) => match a {
+                    'q' => {
+                        self.exit = true;
+                    }
+                    _ => {}
+                },
+                KeyCode::Esc => self.current_mode = Mode::Normal,
+                _ => {}
+            }
 
-    pub fn decrement(&mut self) {
-        self.counter -= 1;
-        self.messages
-            .push(format!("Decremented → {}", self.counter));
+            if let Mode::Normal = self.current_mode {
+                match key {
+                    KeyCode::Char('e') => self.current_mode = Mode::Execute,
+                    KeyCode::Char('m') => self.current_mode = Mode::Modify,
+                    KeyCode::Char('p') => self.current_mode = Mode::Performance,
+                    KeyCode::Char(':') => self.current_mode = Mode::Command,
+                    _ => {}
+                }
+            } else {
+                match self.current_mode {
+                    Mode::Modify => {
+                        self.editor.key_event(k.clone());
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
-
-    pub fn on_tick(&mut self) {
-        self.tick_count += 1;
-    }
+    pub fn on_tick(&mut self) {}
 }
 
-pub fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) -> io::Result<()> {
+pub fn draw(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    app: &mut App,
+) -> io::Result<()> {
     terminal.draw(|frame| {
         let area = frame.area();
-        let chunks = Layout::default()
+        let [body, status_area] = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3), // title
-                Constraint::Length(5), // counter
-                Constraint::Min(5),    // messages
-                Constraint::Length(3), // footer
+                Constraint::Fill(1), // Workable area.
                 Constraint::Length(1),
             ])
-            .split(area);
+            .areas(area);
+        let [panel, editor] = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
+            .areas(body);
+
         if let Mode::Command = app.current_mode {
             frame.render_widget(&app.command_page, area);
+        }
+        if let Mode::Modify = app.current_mode {
+            frame.render_stateful_widget(
+                TextEditor::new()
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_style(Style::default().fg(Color::Cyan))
+                            .border_type(BorderType::Rounded)
+                            .title("Editor"),
+                    )
+                    .cursor_style(
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::Black)
+                            .add_modifier(Modifier::BOLD),
+                    )
+                    .line_number_style(Style::default().fg(Color::DarkGray))
+                    .current_line_style(Style::default().bg(Color::Rgb(30, 30, 50))),
+                editor,
+                &mut app.editor,
+            );
         }
 
         let (text, bg) = match app.current_mode {
@@ -88,7 +177,7 @@ pub fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &App) ->
                     .bg(next_bg), // blends into next section
             ),
         ]));
-        frame.render_widget(status, chunks[4]);
+        frame.render_widget(status, status_area);
     })?;
     Ok(())
 }

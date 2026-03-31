@@ -73,7 +73,10 @@ impl InputBox {
 }
 impl Widget for &InputBox {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let block = Block::default().borders(Borders::ALL).title("Input");
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(ratatui::widgets::BorderType::Rounded)
+            .title("Input");
         block.clone().render(area, buf);
         let inner = block.inner(area);
 
