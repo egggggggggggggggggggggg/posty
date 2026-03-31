@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Constraint,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::Text,
     widgets::{Block, Widget},
 };
@@ -36,7 +36,7 @@ impl CommandType {
 //the user to pass in args.
 //Warn the user if they've passed in too many arguments to a command.
 //Support undo of an auto completed token.
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 #[derive(Default)]
 pub struct BetterNode {
@@ -97,6 +97,31 @@ pub enum TokenKind {
     ///Cannot be recognized as a literal.
     Malformed(String),
 }
+///Possible commands, these could be stacked but seperate them by using |. Essentially each command
+///is executed seperately. This is to make it simpler to implement parsing the command. Might
+///change this later on if I find out a better solution to this.
+pub enum Literal {
+    Bench,
+    Run,
+    Modify,
+    Create,
+    Destroy,
+}
+///The from_str should not return an error. The
+impl FromStr for Literal {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bench" => Ok(Self::Bench),
+            "run" => Ok(Self::Run),
+            "modify" => Ok(Self::Modify),
+            "create" => Ok(Self::Create),
+            "destroy" => Ok(Self::Destroy),
+            _ => Err("Invalid literal".to_string()),
+        }
+    }
+}
+
 impl TokenKind {
     fn new(val: String) -> Self {
         TokenKind::Literal(val)

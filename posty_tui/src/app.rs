@@ -1,15 +1,8 @@
-use std::default;
-use std::io::{self};
-use std::time::Duration;
-
 use crate::action::Actionable;
 use crate::commands::CommandPopup;
-use crate::text_editor::{TextEditor, TextEditorState};
+use crate::editor::Editor;
 use crate::{AppEvent, Mode};
 use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent};
-use crossterm::terminal;
-use ratatui::style::Modifier;
-use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -18,6 +11,8 @@ use ratatui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
+use std::io::{self};
+use std::time::Duration;
 use tokio::sync::mpsc::Receiver;
 
 const TICK_RATE: Duration = Duration::from_millis(250);
@@ -35,7 +30,7 @@ pub struct App {
     pub tick_count: u64,
     pub current_mode: Mode,
     pub command_page: CommandPopup,
-    pub editor: TextEditorState,
+    pub editor: Editor,
 }
 
 impl App {
@@ -46,7 +41,7 @@ impl App {
             tick_count: 0,
             current_mode: Mode::default(),
             command_page: CommandPopup::default(),
-            editor: TextEditorState::new(),
+            editor: Editor::default(),
         }
     }
     pub async fn run(
@@ -92,7 +87,7 @@ impl App {
                 KeyCode::Esc => self.current_mode = Mode::Normal,
                 _ => {}
             }
-
+            //Prevent changing to other modes if not in Normal Mode,
             if let Mode::Normal = self.current_mode {
                 match key {
                     KeyCode::Char('e') => self.current_mode = Mode::Execute,
@@ -136,26 +131,7 @@ pub fn draw(
             frame.render_widget(&app.command_page, area);
         }
         if let Mode::Modify = app.current_mode {
-            frame.render_stateful_widget(
-                TextEditor::new()
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .border_style(Style::default().fg(Color::Cyan))
-                            .border_type(BorderType::Rounded)
-                            .title("Editor"),
-                    )
-                    .cursor_style(
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::Black)
-                            .add_modifier(Modifier::BOLD),
-                    )
-                    .line_number_style(Style::default().fg(Color::DarkGray))
-                    .current_line_style(Style::default().bg(Color::Rgb(30, 30, 50))),
-                editor,
-                &mut app.editor,
-            );
+            frame.render_widget(&mut app.editor, editor);
         }
 
         let (text, bg) = match app.current_mode {

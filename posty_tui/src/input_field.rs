@@ -1,5 +1,8 @@
+use crossterm::event::KeyCode;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Widget};
+
+use crate::action::Actionable;
 
 #[derive(Default)]
 pub struct InputBox {
@@ -106,6 +109,25 @@ impl Widget for &InputBox {
             buf.cell_mut(Position::new(cursor_x, cursor_y))
                 .expect("Cell could not be acquired for some reason")
                 .set_style(Style::default().bg(Color::White).fg(Color::Black));
+        }
+    }
+}
+impl Actionable for InputBox {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) {
+        match key.code {
+            KeyCode::Right => {
+                self.move_right();
+            }
+            KeyCode::Left => {
+                self.move_left();
+            }
+            KeyCode::Char(c) => {
+                self.insert_char(c);
+            }
+            KeyCode::Backspace => {
+                self.backspace();
+            }
+            _ => {}
         }
     }
 }

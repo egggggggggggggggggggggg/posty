@@ -1,17 +1,12 @@
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use posty_tui::run;
 use ratatui::{Terminal, prelude::CrosstermBackend};
 
-use crossterm::{
-    ExecutableCommand,
-    cursor::{DisableBlinking, EnableBlinking, MoveTo, RestorePosition, SavePosition},
-};
 use std::io::{self, stdout};
-use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
