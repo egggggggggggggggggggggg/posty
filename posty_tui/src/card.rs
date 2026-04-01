@@ -28,15 +28,7 @@ pub struct Card {
 }
 impl Default for Card {
     fn default() -> Self {
-        Self {
-            title: String::new(),
-            is_editing: false,
-            pairs: Vec::new(),
-            selected: 0,
-            block: Block::default(),
-            color: Color::default(),
-            show_sensitive: false,
-        }
+        Self::new()
     }
 }
 impl Card {
@@ -102,6 +94,12 @@ impl Card {
     pub fn create_blank_pair(&mut self) {
         self.pairs.push(KvPair::new("", ""));
     }
+    pub fn pair_count(&self) -> usize {
+        self.pairs.len()
+    }
+    pub fn current_selcted_pair(&mut self) -> &mut KvPair {
+        &mut self.pairs[self.selected]
+    }
 }
 impl Widget for &mut Card {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
@@ -115,16 +113,10 @@ impl Widget for &mut Card {
             String::from(" empty ")
         };
         let inner = self.block.inner(area);
-        self.block
-            .clone()
-            .title_bottom(Span::styled(
-                count_badge,
-                Style::default().fg(Color::DarkGray),
-            ))
-            .render(area, buf);
+        self.block.clone().render(area, buf);
         if self.pairs.is_empty() {
             let msg = Line::from(vec![Span::styled(
-                "  — no entries —",
+                "  ─── No entries ───",
                 Style::default()
                     .fg(Color::DarkGray)
                     .add_modifier(Modifier::ITALIC),
@@ -185,8 +177,17 @@ impl Actionable for Card {
                 self.selected = (self.selected + 1) % self.pairs.len();
             }
             (KeyCode::Enter, _) => {
-                self.pairs[self.selected].toglge();
+                if self.pairs.is_empty() {
+                    return;
+                }
+                self.pairs[self.selected].toggle();
             }
+            (KeyCode::Char(c), _) => {
+                if self.is_editing {
+                    let kv_pair = self.current_selcted_pair();
+                }
+            }
+
             _ => {}
         }
         if self.is_editing {
@@ -194,4 +195,3 @@ impl Actionable for Card {
         }
     }
 }
-

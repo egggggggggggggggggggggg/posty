@@ -4,6 +4,8 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
+use crate::action::Actionable;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Section {
     Parameters,
@@ -80,6 +82,21 @@ impl Section {
         }
     }
 }
+#[derive(Default, Clone, Copy, Debug)]
+///Put an option in the field Dropdown(Option<Widget>)
+///We can use this as both a marker and type wrapper.
+pub enum WidgetType {
+    Dropdown,
+    #[default]
+    Input,
+    String,
+}
+#[derive(Default, Clone, Copy, Debug)]
+pub enum FieldType {
+    #[default]
+    Key,
+    Value,
+}
 
 #[derive(Debug, Clone)]
 pub struct KvPair {
@@ -89,6 +106,9 @@ pub struct KvPair {
     pub sensitive: bool,
     /// Greyed-out / crossed-out entry (still shown but visually muted).
     pub enabled: bool,
+    pub field_type: FieldType,
+    pub key_widget_type: WidgetType,
+    pub value_widge_type: WidgetType,
 }
 
 impl KvPair {
@@ -98,17 +118,21 @@ impl KvPair {
             value: value.into(),
             sensitive: false,
             enabled: true,
+            field_type: FieldType::default(),
+            key_widget_type: WidgetType::default(),
+            value_widge_type: WidgetType::default(),
         }
     }
     pub fn sensitive(mut self) -> Self {
         self.sensitive = true;
+
         self
     }
     pub fn disabled(mut self) -> Self {
         self.enabled = false;
         self
     }
-    pub fn toglge(&mut self) {
+    pub fn toggle(&mut self) {
         self.enabled = !self.enabled;
     }
     ///Since KvPair is really only used with card, this helper method exists to allow passing in
@@ -212,6 +236,9 @@ impl KvPair {
         ]);
         Paragraph::new(line).render(area, buf);
     }
+}
+impl Actionable for KvPair {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) {}
 }
 #[inline(always)]
 fn truncate(s: &str, max_chars: usize) -> String {

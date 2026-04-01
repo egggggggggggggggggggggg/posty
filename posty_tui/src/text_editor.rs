@@ -108,6 +108,10 @@ impl TextEditorState {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn should_wrap(mut self, enable: bool) -> Self {
+        self.should_wrap = enable;
+        self
+    }
 
     // ── Content ───────────────────────────────────────────────────────────────
 

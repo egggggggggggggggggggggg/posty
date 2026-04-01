@@ -5,8 +5,8 @@ use ratatui::{
 
 #[derive(Default)]
 pub struct Tab {
-    color: Color,
-    content: String,
+    pub color: Color,
+    pub content: String,
 }
 impl Tab {
     pub fn color(mut self, color: Color) -> Self {
@@ -49,6 +49,10 @@ impl TabBar {
         self.active_style = style;
         self
     }
+    pub fn active(mut self, active: usize) -> Self {
+        self.active = active;
+        self
+    }
     pub fn next(&mut self) {
         self.active = (self.active + 1) % self.items.len();
     }
@@ -66,17 +70,18 @@ impl Widget for TabBar {
         Self: Sized,
     {
         let mut x = area.x;
+        let y = area.y + 1;
         for (index, item) in self.items.iter().enumerate() {
             let w = item.content.len() as u16;
             if index == self.active {
-                buf.set_string(x, area.y, &item.content, self.active_style);
+                buf.set_string(x, y, &item.content, self.active_style.fg(item.color));
             } else {
-                buf.set_string(x, area.y, &item.content, self.tab_style);
+                buf.set_string(x, y, &item.content, self.tab_style.fg(item.color));
             }
             x += w;
             if x < area.right() {
-                buf.set_string(x, area.y, " ", self.border_style);
-                x += 1;
+                buf.set_string(x, y, " | ", self.border_style);
+                x += 3;
             }
         }
     }

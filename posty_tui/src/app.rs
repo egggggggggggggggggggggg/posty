@@ -112,6 +112,7 @@ impl App {
                     Mode::Modify => {
                         self.editor.key_event(k.clone());
                     }
+
                     _ => {}
                 }
             }

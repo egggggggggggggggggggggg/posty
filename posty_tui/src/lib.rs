@@ -12,6 +12,7 @@ pub mod commands;
 pub mod editor;
 pub mod form;
 pub mod input_field;
+pub mod metrics;
 pub mod status_bar;
 pub mod tab_bar;
 pub mod text_editor;
@@ -46,7 +47,7 @@ pub async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::R
         }
     });
     let io_tx = tx.clone();
-    // Spawn a blocking task that reads crossterm key events and forwards them
+    // Spawn a blo→cking task that reads crossterm key events and forwards them
     tokio::task::spawn_blocking(move || {
         let _ = event_loop(io_tx);
     });
@@ -65,4 +66,9 @@ fn event_loop(tx: Sender<AppEvent>) -> std::io::Result<()> {
         }
     }
     Ok(())
+}
+
+pub mod help {
+    const CARD: &'static str = "";
+    const TAB: &'static str = "[j-k] [←-→] - Switch tabs";
 }
