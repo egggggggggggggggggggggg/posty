@@ -7,12 +7,14 @@ use tokio::{sync::mpsc, time};
 use crate::app::App;
 pub mod action;
 pub mod app;
+pub mod card;
 pub mod commands;
 pub mod editor;
+pub mod form;
 pub mod input_field;
 pub mod status_bar;
+pub mod tab_bar;
 pub mod text_editor;
-
 #[derive(Default)]
 pub enum Mode {
     #[default]

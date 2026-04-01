@@ -2,7 +2,7 @@ use crate::action::Actionable;
 use crate::commands::CommandPopup;
 use crate::editor::Editor;
 use crate::{AppEvent, Mode};
-use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent};
+use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -73,7 +73,18 @@ impl App {
             _ => {}
         }
     }
-    pub fn handle_mouse(&mut self, m: MouseEvent) {}
+    pub fn handle_mouse(&mut self, m: MouseEvent) {
+        let MouseEvent {
+            kind,
+            column,
+            row,
+            modifiers,
+        } = m;
+        match kind {
+            MouseEventKind::Moved => {}
+            _ => {}
+        }
+    }
     pub fn handle_key(&mut self, k: KeyEvent) {
         if k.is_press() {
             let key = k.code;
