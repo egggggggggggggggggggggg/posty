@@ -64,24 +64,44 @@ impl TabBar {
         }
     }
 }
+
 impl Widget for TabBar {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
         let mut x = area.x;
-        let y = area.y + 1;
+
         for (index, item) in self.items.iter().enumerate() {
-            let w = item.content.len() as u16;
-            if index == self.active {
-                buf.set_string(x, y, &item.content, self.active_style.fg(item.color));
+            let content = format!(" {} ", item.content);
+            let width = content.len() as u16;
+
+            let style = if index == self.active {
+                self.active_style.fg(item.color)
             } else {
-                buf.set_string(x, y, &item.content, self.tab_style.fg(item.color));
-            }
-            x += w;
-            if x < area.right() {
-                buf.set_string(x, y, " | ", self.border_style);
-                x += 3;
+                self.tab_style.fg(item.color)
+            };
+
+            // Top border
+            buf.set_string(x, area.y, "╭", style);
+            buf.set_string(x + 1, area.y, "─".repeat(width as usize), style);
+            buf.set_string(x + width + 1, area.y, "╮", style);
+
+            // Middle (text)
+            buf.set_string(x, area.y + 1, "│", style);
+            buf.set_string(x + 1, area.y + 1, &content, style);
+            buf.set_string(x + width + 1, area.y + 1, "│", style);
+
+            // Bottom border
+            buf.set_string(x, area.y + 2, "╰", style);
+            buf.set_string(x + 1, area.y + 2, "─".repeat(width as usize), style);
+            buf.set_string(x + width + 1, area.y + 2, "╯", style);
+
+            // Move cursor for next tab (with spacing)
+            x += width + 3;
+
+            if x >= area.right() {
+                break;
             }
         }
     }

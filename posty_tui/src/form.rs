@@ -1,3 +1,5 @@
+use crossterm::event::KeyCode;
+use posty::executor::AppEvent;
 use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -238,7 +240,13 @@ impl KvPair {
     }
 }
 impl Actionable for KvPair {
-    fn key_event(&mut self, key: crossterm::event::KeyEvent) {}
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
+        match key.code {
+            KeyCode::Char(' ') => {}
+            _ => {}
+        }
+        None
+    }
 }
 #[inline(always)]
 fn truncate(s: &str, max_chars: usize) -> String {

@@ -1,4 +1,5 @@
 use crossterm::event::KeyCode;
+use posty::executor::AppEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Widget};
 
@@ -129,7 +130,7 @@ impl Widget for &InputBox {
     }
 }
 impl Actionable for InputBox {
-    fn key_event(&mut self, key: crossterm::event::KeyEvent) {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
         match key.code {
             KeyCode::Right => {
                 self.move_right();
@@ -145,5 +146,6 @@ impl Actionable for InputBox {
             }
             _ => {}
         }
+        None
     }
 }

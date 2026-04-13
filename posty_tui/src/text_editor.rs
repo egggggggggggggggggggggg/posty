@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
+use posty::executor::AppEvent;
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
@@ -613,7 +614,7 @@ impl<'a> StatefulWidget for TextEditor<'a> {
     }
 }
 impl Actionable for TextEditorState {
-    fn key_event(&mut self, key: crossterm::event::KeyEvent) {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
         match (key.code, key.modifiers) {
             (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
                 self.insert_char(c);
@@ -632,5 +633,6 @@ impl Actionable for TextEditorState {
             }
             _ => {}
         }
+        None
     }
 }

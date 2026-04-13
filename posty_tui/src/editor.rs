@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use posty::executor::AppEvent;
 use ratatui::{
     layout::{Alignment, Constraint, Layout},
     style::{Color, Modifier, Style},
@@ -131,6 +132,9 @@ impl Editor {
             _ => {}
         }
     }
+    fn extract_request(&self) {
+        let headers = self.headers.collect_selected();
+    }
 }
 impl Widget for &mut Editor {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
@@ -183,13 +187,13 @@ impl Widget for &mut Editor {
 }
 
 impl Actionable for Editor {
-    fn key_event(&mut self, key: KeyEvent) {
+    fn key_event(&mut self, key: KeyEvent) -> Option<AppEvent> {
         // Global shortcuts (always allowed, but validated)
         match (key.code, key.modifiers) {
             (KeyCode::Char('t'), KeyModifiers::CONTROL) => {
                 self.selected_component = Component::Tabs;
                 self.resolve_component_exit();
-                return;
+                return None;
             }
             (KeyCode::Char('p'), KeyModifiers::CONTROL) => {
                 self.resolve_component_exit();
@@ -197,12 +201,12 @@ impl Actionable for Editor {
                 if let Component::Endpoint = self.selected_component {
                     self.endpoint_input.show_curosr();
                 }
-                return;
+                return None;
             }
             (KeyCode::Char('w'), KeyModifiers::CONTROL) => {
-                ///Saves the output to a specified struct format and assigns it to the current
-                ///project. This also triggers a file write to save the data.
-
+                //Saves the output to a specified struct format and assigns it to the current
+                //project. This also triggers a file write to save the data.
+                //
             }
             _ => {}
         }
@@ -233,8 +237,9 @@ impl Actionable for Editor {
                 self.endpoint_input.key_event(key);
             }
             Component::Parameters => {
-                self.endpoint_input.key_event(key);
+                self.params.key_event(key);
             }
         }
+        None
     }
 }

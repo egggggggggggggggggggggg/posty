@@ -73,18 +73,7 @@ impl App {
             _ => {}
         }
     }
-    pub fn handle_mouse(&mut self, m: MouseEvent) {
-        let MouseEvent {
-            kind,
-            column,
-            row,
-            modifiers,
-        } = m;
-        match kind {
-            MouseEventKind::Moved => {}
-            _ => {}
-        }
-    }
+    pub fn handle_mouse(&mut self, m: MouseEvent) {}
     pub fn handle_key(&mut self, k: KeyEvent) {
         if k.is_press() {
             let key = k.code;

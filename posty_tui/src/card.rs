@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
+use posty::executor::AppEvent;
 use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
@@ -155,7 +156,7 @@ impl Widget for &mut Card {
     }
 }
 impl Actionable for Card {
-    fn key_event(&mut self, key: crossterm::event::KeyEvent) {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
         match (key.code, key.modifiers) {
             (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                 self.show_sensitive(true);
@@ -174,11 +175,14 @@ impl Actionable for Card {
                 }
             }
             (KeyCode::Down, _) => {
+                if self.pairs.is_empty() {
+                    return None;
+                }
                 self.selected = (self.selected + 1) % self.pairs.len();
             }
             (KeyCode::Enter, _) => {
                 if self.pairs.is_empty() {
-                    return;
+                    return None;
                 }
                 self.pairs[self.selected].toggle();
             }
@@ -193,5 +197,6 @@ impl Actionable for Card {
         if self.is_editing {
             //Route to the respective KvPair
         }
+        None
     }
 }
