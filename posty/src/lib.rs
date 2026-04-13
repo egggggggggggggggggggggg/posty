@@ -15,6 +15,20 @@ pub struct RequestData {
     pub auth: Option<Auth>,
 }
 
+pub enum AppEvent {
+    Tick,
+    Response(ResponseData<'static>),
+    InvalidRequest(IntoRequestError),
+    FailedExecution(reqwest::Error),
+    ChangeDisplay(FileData),
+    ExecuteRequest(RequestData),
+    Create {
+        node_type: NodeType,
+        name: String,
+        path: Vec<String>,
+    },
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct KVPair {
     pub key: String,
@@ -216,6 +230,8 @@ impl<'a> ResponseData<'_> {
 }
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use crate::collection::{FileData, NodeType};
 
 impl Serialize for ResponseData<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

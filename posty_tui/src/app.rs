@@ -1,8 +1,9 @@
+use crate::Mode;
 use crate::action::Actionable;
 use crate::commands::CommandPopup;
 use crate::editor::Editor;
-use crate::{AppEvent, Mode};
 use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
+use posty::{AppEvent, RequestData, executor::Executor};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -11,8 +12,11 @@ use ratatui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
-use std::io::{self};
 use std::time::Duration;
+use std::{
+    io::{self},
+    sync::Arc,
+};
 use tokio::sync::mpsc::Receiver;
 
 const TICK_RATE: Duration = Duration::from_millis(250);
@@ -31,6 +35,7 @@ pub struct App {
     pub current_mode: Mode,
     pub command_page: CommandPopup,
     pub editor: Editor,
+    pub executor: Arc<Executor>,
 }
 
 impl App {
@@ -42,29 +47,51 @@ impl App {
             current_mode: Mode::default(),
             command_page: CommandPopup::default(),
             editor: Editor::default(),
+            executor: Arc::new(Executor::default()),
         }
     }
     pub async fn run(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-        rx: &mut Receiver<AppEvent>,
+        app_rx: &mut Receiver<AppEvent>,
+        io_rx: &mut Receiver<Event>,
     ) -> io::Result<()> {
         while !self.exit {
             draw(terminal, self)?;
-            match rx.recv().await {
-                Some(app_event) => {
-                    if let AppEvent::Event(event) = app_event {
-                        self.handle_events(event);
-                    } else {
+            while let Some(app_event) = app_rx.recv().await {
+                match app_event {
+                    AppEvent::Response(r) => {
+                        //Give a clone or transfer ownership over to the response pane.
+
                     }
+                    ///If the user wants to aggregate results, maybe add a dedicated task for
+                    ///aggregating responses and extracting the important info like status codes,
+                    ///etc.
+                    AppEvent::ExecuteRequest(req) => {
+                        self.executor.spawn(req, None);
+                    }
+                    AppEvent::Create {
+                        node_type,
+                        name,
+                        path,
+                    } => {}
+                    AppEvent::InvalidRequest(err) => {
+                        ///Display the error in the respective widget area.
+                        ///Or make a notif type message appear indicating what failed. 
+                    }
+                    AppEvent::ChangeDisplay(fd) => {}
+                    AppEvent::Tick => {}
+                    AppEvent::FailedExecution(err) => {}
+                    _ => {}
                 }
-                None => {
-                    break;
-                }
+            }
+            while let Some(a) = io_rx.recv().await {
+                self.handle_events(a);
             }
         }
         Ok(())
     }
+
     pub fn handle_events(&mut self, event: Event) {
         match event {
             Event::FocusLost => {}

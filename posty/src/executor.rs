@@ -14,6 +14,7 @@ pub enum ExecutorError {
     ResponseParse(IntoResponseError),
     ChannelClosed,
 }
+
 impl std::fmt::Display for ExecutorError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -32,7 +33,7 @@ impl std::error::Error for ExecutorError {}
 ///Balanced - Tracks status codes and minor info like status, headers, etc.
 ///MaxThroughput - Discards the whole response. Only cares about amount of requests executed.
 ///FullTracking - Tracks all of the info, like body, etc, Default as the user oftentimes only sends one
-///request which they want to be able to fully examine.
+///request whichthey want to be able to fully examine.
 pub enum ExecutionMode {
     Balanced,
     MaxThroughput,
@@ -96,21 +97,16 @@ impl RequestSettings {
 }
 ///IO is excluded from this. If the frontend wants some enum to hold both UI related stuff and
 ///application logic, they can define their own enum for that and use that.
-pub enum AppEvent {
-    Tick,
-    Response(ResponseData<'static>),
-    InvalidRequest(IntoRequestError),
-    FailedExecution(reqwest::Error),
-    ChangeDisplay(FileData),
-}
 pub enum RequestError {
     IntoError(IntoRequestError),
 }
+#[derive(Default)]
 pub struct Executor {
     settings: RequestSettings,
     mode: ExecutionMode,
     client: Client,
 }
+
 impl Executor {
     /// Build an `Executor`.  A single [`reqwest::Client`] is shared across all
     /// workers so that the connection pool is reused.
@@ -143,6 +139,8 @@ impl Executor {
     /// Each response is forwarded on `response_tx` according to the configured
     /// [`ExecutionMode`].  Pass `None` when you only care about side-effects or
     /// are using `MaxThroughput` mode.
+    ///
+    ///
     pub async fn run(
         &self,
         request: RequestData,

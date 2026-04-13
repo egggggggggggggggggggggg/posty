@@ -1,10 +1,11 @@
 use crossterm::event::KeyCode;
 use posty::{
-    collection::{Node, NodeKind},
+    collection::{Node, NodeKind, NodeType},
     executor::AppEvent,
 };
+use ratatui::widgets::Widget;
 
-use crate::action::Actionable;
+use crate::{AppEvent, action::Actionable};
 
 pub struct DisplayNode {
     path: Vec<String>,
@@ -18,11 +19,6 @@ pub struct CollectionPane {
     ///If the user is currently naming a new Node.
     editing: bool,
     node_editor: NodeEditor,
-}
-#[derive(Default)]
-pub struct NodeEditor {
-    node: Option<Node>,
-    naming: bool,
 }
 impl CollectionPane {
     ///Node is read from a file and passed in here where it displays stuff.
@@ -150,8 +146,40 @@ impl Actionable for CollectionPane {
         None
     }
 }
+
+///This might be redundant but it's easier to seperate logic and avoid clotting up the keybind
+///actions for CollectionPane. Makes it easier to reason about the code. Add a way of cahnging the
+///NodeType later. Either thru a visual element or a keybind
+#[derive(Default)]
+pub struct NodeEditor {
+    name_buffer: String,
+    node_type: NodeType,
+}
 impl Actionable for NodeEditor {
     fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
+        match key.code {
+            KeyCode::Char(ch) => {
+                self.name_buffer.push(ch);
+            }
+            KeyCode::Backspace => {
+                if self.name_buffer.is_empty() {
+                    return None;
+                }
+                self.name_buffer.pop();
+            }
+            KeyCode::Enter => match self.node_type {
+                NodeType::File => return Some(AppEvent),
+                _ => return None,
+            },
+            _ => {}
+        }
         None
+    }
+}
+impl Widget for &NodeEditor {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
+    where
+        Self: Sized,
+    {
     }
 }

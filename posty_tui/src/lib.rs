@@ -1,7 +1,7 @@
 use std::{io, time::Duration};
 
 use crossterm::event::{self, Event};
-use posty::{IntoRequestError, RequestData, ResponseData};
+use posty::{AppEvent, IntoRequestError, RequestData, ResponseData, collection::NodeType};
 use ratatui::{Terminal, prelude::CrosstermBackend};
 use reqwest::Client;
 use tokio::{sync::mpsc, time};
@@ -28,42 +28,37 @@ pub enum Mode {
 }
 ///Since both UI libraries for the GUI and TUI are immediate-mode rendering, I think this could be
 ///used for both so maybe move it into posty so both can access this?
-pub enum AppEvent {
-    Event(Event),
-    Tick,
-    Response(ResponseData<'static>),
-    InvalidRequest(IntoRequestError),
-    FailedExecution(reqwest::Error),
-}
 pub async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
     let mut app = App::new();
-    let (tx, mut rx) = mpsc::channel::<AppEvent>(32);
+    let (io_tx, mut io_rx) = mpsc::channel::<Event>(32);
+    let (app_tx, mut app_rx) = mpsc::channel::<AppEvent>(32);
     //Task_tx will be given to app for it to tell the async task to execute a request.
     let (task_tx, mut task_rx) = mpsc::channel::<RequestData>(32);
-
-    //Worker thread
-    let worker_tx = tx.clone();
+    //Responsible for dispatching the event and sending back a response. Handles the other stuff
+    //aswell.
+    let worker_tx = app_tx.clone();
     let _worker_handle = spawn_worker(task_rx, worker_tx);
 
-    //IO thread
-    let io_tx = tx.clone();
     tokio::task::spawn_blocking(move || {
         let _ = event_loop(io_tx);
     });
-    //UI thread
-    app.run(terminal, &mut rx).await?;
+
+    ///Transfers over the rx to App which owns it preventing the worker and io channels from being
+    ///closed. When App gets dropped so too do the workers and IO so in practice both of these last
+    ///for the duration of the application.
+    app.run(terminal, &mut app_rx, &mut io_rx).await?;
     Ok(())
 }
 fn spawn_worker(
     mut task_rx: mpsc::Receiver<RequestData>,
-    tick_tx: mpsc::Sender<AppEvent>,
+    app_tx: mpsc::Sender<AppEvent>,
 ) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         let mut interval = time::interval(Duration::from_millis(100));
         let client = Client::new();
         loop {
             interval.tick().await;
-            if tick_tx.is_closed() {
+            if app_tx.is_closed() {
                 break;
             }
             match task_rx.recv().await {
@@ -74,12 +69,13 @@ fn spawn_worker(
                             ResponseData::extract_with_body(Duration::default(), res).await;
                     }
                     Err(e) => {
-                        let _ = tick_tx.send(AppEvent::InvalidRequest(e)).await;
+                        let _ = app_tx.send(AppEvent::InvalidRequest(e)).await;
                     }
                 },
                 None => return,
             }
-            if tick_tx.send(AppEvent::Tick).await.is_err() {
+            ///Checks if the channel is still open;
+            if app_tx.send(AppEvent::Tick).await.is_err() {
                 break;
             }
         }
@@ -88,11 +84,11 @@ fn spawn_worker(
 
 use tokio::sync::mpsc::Sender;
 
-fn event_loop(tx: Sender<AppEvent>) -> std::io::Result<()> {
+fn event_loop(tx: Sender<Event>) -> std::io::Result<()> {
     while !tx.is_closed() {
         if event::poll(Duration::from_millis(5))? {
             let event = event::read()?;
-            if tx.blocking_send(AppEvent::Event(event)).is_err() {
+            if tx.blocking_send(event).is_err() {
                 break;
             }
         }

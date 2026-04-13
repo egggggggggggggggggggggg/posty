@@ -1,80 +1,48 @@
 use std::time::{Duration, Instant};
 
-use ratatui::widgets::Widget;
+use posty::ResponseData;
+use ratatui::{
+    layout::{Constraint, Layout},
+    widgets::Widget,
+};
 use reqwest::{Response, StatusCode};
 
-use crate::tab_bar::TabBar;
+use crate::{action::Actionable, tab_bar::TabBar};
 
+enum ReseponseArea {
+    Cookies,
+    Body,
+    Header,
+}
 pub struct ResponseDisplay {
-    response_bar: ResponseBar,
-    body: Body,
-    header: Headers,
+    response: Option<ResponseData>,
+    area: ReseponseArea,
 }
-impl ResponseDisplay {
-    fn populate(response: Response) {
-        let cookies: Vec<reqwest::cookie::Cookie<'_>> = response.cookies().collect();
-    }
-}
-
 impl Widget for &ResponseDisplay {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
+        if let Some(response) = self.response {
+            //Render the status code and timestamp and request size in a bar at the top.
+            let constraints = vec![Constraint::Length(1), Constraint::Fill(1)];
+            let [bar, rest] = Layout::default().constraints(constraints).areas(area);
+
+            let top_row = format!("{}", self.response.status).render(bar, buf);
+            match self.area {
+                ReseponseArea::Cookies => {}
+                ReseponseArea::Body => {}
+                ReseponseArea::Header => {}
+            }
+        } else {
+        }
     }
 }
-
-pub struct ResponseBar {
-    tabs: TabBar,
-    history: String,
-    response_status: StatusCode,
-    response_time: Duration,
-    response_size: f32,
-}
-
-pub struct CookieArea {
-    cookies: Vec<Cookie>,
-}
-impl Widget for CookieArea {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
-    where
-        Self: Sized,
-    {
-        for cookie in self.cookies {}
-    }
-}
-pub struct Cookie {
-    name: String,
-    value: String,
-    domain: String,
-    path: String,
-    exprire: String,
-    http_only: bool,
-    secure: bool,
-}
-pub struct Headers {
-    keys: Vec<String>,
-    value: Vec<String>,
-}
-enum BodyType {
-    Html,
-    Xml,
-    Json,
-    JavaScript,
-    Raw,
-    Hex,
-    Base64,
-}
-
-pub struct Body {
-    render_type: BodyType,
-    ///Contains a vec of lines
-    content: Vec<String>,
-}
-impl Widget for Body {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
-    where
-        Self: Sized,
-    {
+impl Actionable for ResponseDisplay {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
+        match key.code {
+            _ => {}
+        }
+        None
     }
 }
