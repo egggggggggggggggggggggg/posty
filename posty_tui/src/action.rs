@@ -1,5 +1,5 @@
 use crossterm::event::{KeyEvent, MouseEvent};
-use posty::executor::AppEvent;
+use posty::AppEvent;
 
 pub trait Actionable {
     fn key_event(&mut self, key: KeyEvent) -> Option<AppEvent>;

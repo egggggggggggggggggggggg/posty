@@ -36,6 +36,11 @@ pub struct KVPair {
     pub enabled: bool,   // toggle in UI
     pub sensitive: bool, // hide value in UI (e.g. tokens)
 }
+impl KVPair {
+    pub fn extract(&self) -> (&str, &str) {
+        (&self.key, &self.value)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RequestBody {
@@ -80,6 +85,13 @@ impl Default for RequestData {
 }
 
 impl RequestData {
+    pub fn method(&self) -> &str {
+        &self.method
+    }
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
     pub fn into_request(self, client: &Client) -> Result<Request, IntoRequestError> {
         let method = Method::from_str(&self.method).map_err(|_| IntoRequestError::InvalidMethod)?;
 

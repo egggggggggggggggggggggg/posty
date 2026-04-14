@@ -1,8 +1,5 @@
 use crossterm::event::KeyCode;
-use posty::{
-    collection::{Node, NodeKind, NodeType},
-    executor::AppEvent,
-};
+use posty::collection::{Node, NodeKind, NodeType};
 use ratatui::widgets::Widget;
 
 use crate::{AppEvent, action::Actionable};
@@ -168,7 +165,7 @@ impl Actionable for NodeEditor {
                 self.name_buffer.pop();
             }
             KeyCode::Enter => match self.node_type {
-                NodeType::File => return Some(AppEvent),
+                NodeType::File => return Some(todo!("")),
                 _ => return None,
             },
             _ => {}

@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
+use posty::AppEvent;
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},

@@ -149,8 +149,6 @@ impl Node {
                 .find_map(|child| child.add_at_path(node, &path[1..])),
         }
     }
-    pub fn create_at_path(name: String, node_type: NodeType, )
-
 
     pub fn rename(&mut self, path: &[String], new_name: &str) -> Option<()> {
         if path.is_empty() || self.name != path[0] {

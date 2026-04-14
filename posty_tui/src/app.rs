@@ -62,13 +62,12 @@ impl App {
                 match app_event {
                     AppEvent::Response(r) => {
                         //Give a clone or transfer ownership over to the response pane.
-
                     }
-                    ///If the user wants to aggregate results, maybe add a dedicated task for
-                    ///aggregating responses and extracting the important info like status codes,
-                    ///etc.
+                    //If the user wants to aggregate results, maybe add a dedicated task for
+                    //aggregating responses and extracting the important info like status codes,
+                    //etc.
                     AppEvent::ExecuteRequest(req) => {
-                        self.executor.spawn(req, None);
+                        self.executor.clone().spawn(req, None);
                     }
                     AppEvent::Create {
                         node_type,
@@ -76,8 +75,8 @@ impl App {
                         path,
                     } => {}
                     AppEvent::InvalidRequest(err) => {
-                        ///Display the error in the respective widget area.
-                        ///Or make a notif type message appear indicating what failed. 
+                        //Display the error in the respective widget area.
+                        //Or make a notif type message appear indicating what failed.
                     }
                     AppEvent::ChangeDisplay(fd) => {}
                     AppEvent::Tick => {}

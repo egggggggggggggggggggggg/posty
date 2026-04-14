@@ -1,24 +1,41 @@
-use crossterm::event::KeyCode;
+use std::ops::Add;
+
+use crossterm::{event::KeyCode, style::Colored};
 use posty::RequestData;
-use ratatui::widgets::Widget;
+use ratatui::{
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
+    text::{Line, Span},
+    widgets::Widget,
+};
 
 use crate::action::Actionable;
 
-#[derive(Debug, Clone)]
-pub enum RequestArea {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FocusArea {
     Method,
     Url,
+    Panel(PanelArea),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PanelArea {
     Param,
     Headers,
     Body,
     Auth,
 }
+enum BodyFormat {
+    Json,
+    Raw,
+}
 
 pub struct RequestPane {
     request_data: Option<RequestData>,
-    focused_area: RequestArea,
+    focused_area: FocusArea,
+    last_panel: PanelArea,
+    body_format: BodyFormat,
 }
-
 impl RequestPane {
     fn new() {}
 }
@@ -30,17 +47,65 @@ impl Widget for &RequestPane {
         match &self.request_data {
             None => {}
             Some(r) => {
-                //Render the method and URL bar;
-                match self.focused_area {
-                    _ => {}
+                //Render the method and URL bar
+                let method = r.method();
+                let url = r.url();
+                let [bar, mut rest] = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Length(1), Constraint::Fill(1)])
+                    .areas(area);
+                //The format is kinda useless.
+                Line::from(vec![
+                    Span::styled(method, Style::default()),
+                    Span::raw(format!("Url: {}", url)),
+                ])
+                .render(bar, buf);
+                match self.last_panel {
+                    PanelArea::Body => {}
+                    PanelArea::Auth => {
+                        if let Some(auth) = &r.auth {
+                        } else {
+                            //Render something that allows the user to add a new Auth type or smth.
+                            //Dropdown maybe.
+                        }
+                    }
+                    PanelArea::Headers => {
+                        r.headers.iter().map(|pair| {
+                            if pair.enabled {
+                                //render it on the next area.
+                            } else {
+                            }
+                        });
+                    }
+                    PanelArea::Param => {
+                        r.params.iter().for_each(|pair| {
+                            let (key, value) = pair.extract();
+                            let (sym, style) = if pair.enabled {
+                                ("X", Style::default())
+                            } else {
+                                (" ", Style::default().fg(Color::Gray))
+                            };
+
+                            //This is dumb as it does not check for out of bounds, but this is
+                            //just to get the basic idea of how to display this stuff. Will
+                            //implement the checks later.
+                            rest.y += 1;
+                        });
+                        //Render a dropdown here with the left over space.
+                    }
                 }
             }
         }
     }
 }
+///A for adding a custom key and value.
+///Enter on the dropdown to select a preset key and allow the user to enter a value.
+///Auth is dropdown and doesn't have a tab.
+///
 impl Actionable for RequestPane {
-    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<posty::executor::AppEvent> {
+    fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<posty::AppEvent> {
         match key.code {
+            KeyCode::Char('a') => {}
             _ => {}
         }
         None

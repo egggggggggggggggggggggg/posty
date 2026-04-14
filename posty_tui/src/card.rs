@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
-use posty::executor::AppEvent;
+use posty::AppEvent;
 use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},

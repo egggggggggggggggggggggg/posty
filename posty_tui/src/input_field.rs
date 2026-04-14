@@ -1,5 +1,5 @@
 use crossterm::event::KeyCode;
-use posty::executor::AppEvent;
+use posty::AppEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Widget};
 
