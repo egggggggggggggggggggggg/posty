@@ -1,3 +1,4 @@
+use crate::action::Actionable;
 use crossterm::event::KeyCode;
 use posty::AppEvent;
 use ratatui::{
@@ -5,9 +6,6 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Paragraph, Widget},
 };
-
-use crate::action::Actionable;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Section {
     Parameters,
@@ -16,7 +14,6 @@ pub enum Section {
     Body,
     Endpoint,
 }
-
 impl Section {
     pub const ALL: [Section; 5] = [
         Section::Parameters,

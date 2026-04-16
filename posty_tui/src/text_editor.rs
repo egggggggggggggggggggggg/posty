@@ -9,8 +9,6 @@ use ratatui::{
 
 use crate::action::Actionable;
 
-// ── Formatting ────────────────────────────────────────────────────────────────
-
 /// Selects which formatter [`TextEditorState::format`] will run.
 ///
 /// Add new variants here as more formatters are needed; the match in

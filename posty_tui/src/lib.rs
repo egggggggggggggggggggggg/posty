@@ -1,5 +1,6 @@
-use std::{io, time::Duration};
+use std::{io, path::Path, time::Duration};
 
+use color_eyre::eyre::bail;
 use crossterm::event::{self, Event};
 use posty::{AppEvent, IntoRequestError, RequestData, ResponseData, collection::NodeType};
 use ratatui::{Terminal, prelude::CrosstermBackend};
@@ -9,14 +10,13 @@ use tokio::{sync::mpsc, time};
 use crate::app::App;
 pub mod action;
 pub mod app;
-pub mod card;
+pub mod app_1;
 pub mod commands;
-pub mod editor;
-pub mod form;
 pub mod input_field;
 pub mod panes;
 pub mod tab_bar;
 pub mod text_editor;
+pub mod widgets;
 #[derive(Default)]
 pub enum Mode {
     #[default]

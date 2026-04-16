@@ -1,7 +1,6 @@
 use crate::Mode;
 use crate::action::Actionable;
 use crate::commands::CommandPopup;
-use crate::editor::Editor;
 use crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use posty::{AppEvent, RequestData, executor::Executor};
 use ratatui::{
@@ -18,7 +17,6 @@ use std::{
     sync::Arc,
 };
 use tokio::sync::mpsc::Receiver;
-
 const TICK_RATE: Duration = Duration::from_millis(250);
 const POLL_RATE: Duration = Duration::from_millis(50);
 // ----- App state -----

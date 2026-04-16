@@ -1,6 +1,4 @@
-use std::ops::Add;
-
-use crossterm::{event::KeyCode, style::Colored};
+use crossterm::event::KeyCode;
 use posty::RequestData;
 use ratatui::{
     layout::{Constraint, Direction, Layout},
@@ -11,25 +9,28 @@ use ratatui::{
 
 use crate::action::Actionable;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 enum FocusArea {
+    #[default]
     Method,
     Url,
     Panel(PanelArea),
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 enum PanelArea {
     Param,
     Headers,
+    #[default]
     Body,
     Auth,
 }
+#[derive(Default)]
 enum BodyFormat {
+    #[default]
     Json,
     Raw,
 }
-
+#[derive(Default)]
 pub struct RequestPane {
     request_data: Option<RequestData>,
     focused_area: FocusArea,
@@ -71,10 +72,13 @@ impl Widget for &RequestPane {
                     }
                     PanelArea::Headers => {
                         r.headers.iter().map(|pair| {
-                            if pair.enabled {
-                                //render it on the next area.
+                            let (key, value) = pair.extract();
+                            let (sym, style) = if pair.enabled {
+                                ("X", Style::default())
                             } else {
-                            }
+                                (" ", Style::default().fg(Color::Gray))
+                            };
+                            rest.y += 1;
                         });
                     }
                     PanelArea::Param => {

@@ -1,16 +1,20 @@
 use crate::action::Actionable;
+use crossterm::event::KeyCode;
 use posty::{AppEvent, ResponseData};
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Paragraph, Row, Wrap};
 use ratatui::{
     layout::{Constraint, Layout},
-    widgets::{StatefulWidget, Table, Widget},
+    widgets::{Table, Widget},
 };
+#[derive(Default)]
 enum ResponseArea {
     Cookies,
     Body,
+    #[default]
     Headers,
 }
+#[derive(Default)]
 pub struct ResponseDisplay {
     response: Option<ResponseData<'static>>,
     focused_area: ResponseArea,
@@ -37,11 +41,6 @@ impl Widget for &ResponseDisplay {
             .as_deref()
             .map(|b| format!("{}B", b.len()))
             .unwrap_or_else(|| "0B".to_string());
-
-        let bar_text = format!(
-            " {} │ {} │ {}ms │ {}",
-            status, timestamp, response_ms, body_size
-        );
 
         let status_style = match response.status.as_u16() {
             200..=299 => Style::new().fg(Color::Green),
@@ -90,7 +89,6 @@ impl Widget for &ResponseDisplay {
                     buf,
                 );
             }
-
             ResponseArea::Cookies => {
                 let rows: Vec<Row> = response
                     .cookies
@@ -115,7 +113,6 @@ impl Widget for &ResponseDisplay {
                         ])
                     })
                     .collect();
-
                 Widget::render(
                     Table::new(rows, [Constraint::Fill(1), Constraint::Fill(2)])
                         .header(
@@ -132,6 +129,15 @@ impl Widget for &ResponseDisplay {
 impl Actionable for ResponseDisplay {
     fn key_event(&mut self, key: crossterm::event::KeyEvent) -> Option<AppEvent> {
         match key.code {
+            KeyCode::Char('h') => {
+                self.focused_area = ResponseArea::Headers;
+            }
+            KeyCode::Char('b') => {
+                self.focused_area = ResponseArea::Body;
+            }
+            KeyCode::Char('c') => {
+                self.focused_area = ResponseArea::Cookies;
+            }
             _ => {}
         }
         None

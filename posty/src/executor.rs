@@ -1,4 +1,4 @@
-use crate::{IntoRequestError, IntoResponseError, RequestData, ResponseData, collection::FileData};
+use crate::{IntoRequestError, IntoResponseError, RequestData, ResponseData};
 use reqwest::Client;
 use std::{
     sync::Arc,

@@ -8,7 +8,6 @@ use ratatui::{
 
 use crate::{
     action::Actionable,
-    card::Card,
     input_field::InputBox,
     tab_bar::{Tab, TabBar},
     text_editor::{TextEditor, TextEditorState},
